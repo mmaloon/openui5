@@ -3,10 +3,9 @@
  */
 
 // Provides the implementation for a Message
-sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object'],
-	function(jQuery, Object) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './MessageProcessor'],
+	function(jQuery, Object, library, MessageProcessor) {
 	"use strict";
-
 
 	/**
 	 *
@@ -47,6 +46,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object'],
 			this.id = mParameters.id ? mParameters.id : jQuery.sap.uid();
 			this.message = mParameters.message;
 			this.description = mParameters.description;
+			this.descriptionUrl = mParameters.descriptionUrl;
 			this.type = mParameters.type;
 			this.code = mParameters.code;
 			this.target = mParameters.target;
@@ -102,6 +102,24 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object'],
 	};
 	
 	/**
+	 * Returns the message description URL which should be used to download the description content
+	 * 
+	 *  @returns {string} The URL pointing to the description long text
+	 */
+	Message.prototype.getDescriptionUrl = function() {
+		return this.descriptionUrl;
+	};
+	
+	/**
+	 * Set message description URL which should be used to download the description content
+	 * 
+	 * @param {string} sDescription The URL pointing to the description long text
+	 */
+	Message.prototype.setDescriptionUrl = function(sDescriptionUrl) {
+		this.descriptionUrl = sDescriptionUrl;
+	};
+
+	/**
 	 * Set message type
 	 * 
 	 * @param {sap.ui.core.MessageType} sType The Message type 
@@ -148,7 +166,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object'],
 	 * @param {sap.ui.core.message.MessageProcessor} oMessageProcessor The Message processor 
 	 */
 	Message.prototype.setMessageProcessor = function(oMessageProcessor) {
-		if (oMessageProcessor instanceof sap.ui.core.message.MessageProcessor) {
+		if (oMessageProcessor instanceof MessageProcessor) {
 			this.processor = oMessageProcessor;
 		} else {
 			jQuery.sap.log.error("MessageProcessor must be an instance of sap.ui.core.message.MessageProcessor");
@@ -222,4 +240,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object'],
 	
 	return Message;
 
-}, /* bExport= */ true);
+});

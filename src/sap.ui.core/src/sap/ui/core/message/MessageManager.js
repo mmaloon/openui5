@@ -3,8 +3,12 @@
  */
 
 // Provides the implementation for a MessageManager
-sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/model/message/MessageModel', './Message', './ControlMessageProcessor'],
-	function(jQuery, EventProvider, MessageModel, Message, ControlMessageProcessor) {
+sap.ui.define([
+		'jquery.sap.global',
+		'sap/ui/base/EventProvider', 'sap/ui/base/ManagedObject',
+		'sap/ui/model/message/MessageModel', './Message', './ControlMessageProcessor'],
+	function(jQuery, EventProvider, ManagedObject, MessageModel, Message, ControlMessageProcessor) {
+
 	"use strict";
 
 
@@ -74,7 +78,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/model/m
 			if (this.mMessages[sProcessorId] && this.mMessages[sProcessorId][sTarget]) {
 				this.removeMessages(this.mMessages[sProcessorId][sTarget]);
 			}
-			var oMessage = new sap.ui.core.message.Message({
+			var oMessage = new Message({
 					type: sap.ui.core.MessageType.Error,
 					message: oEvent.getParameter("message"), 
 					target: sTarget,
@@ -182,15 +186,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/model/m
 	MessageManager.prototype._updateMessageModel = function() {
 		var aMessages = [];
 		
-		if (!this.oMessageModel) {
-			this.oMessageModel = new MessageModel(this);
-		}
+		var oMessageModel = this.getMessageModel();
+		
 		jQuery.each(this.mMessages, function(sProcessorId, mMessages) {
 			jQuery.each(mMessages, function(sKey, vMessages){
 				aMessages = jQuery.merge(aMessages, vMessages);
 			});
 		});
-		this.oMessageModel.setData(aMessages);
+		oMessageModel.setData(aMessages);
 		this._pushMessages();
 	};
 	
@@ -217,11 +220,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/model/m
 		var that = this;
 		if (!vMessages || (jQuery.isArray(vMessages) && vMessages.length == 0)) {
 			return;
-		}else if (jQuery.isArray(vMessages)) {
-			for (var i = 0; i < vMessages.length; i++) {
-				that._removeMessage(vMessages[i]);
+		} else if (jQuery.isArray(vMessages)) {
+			// We need to work on a copy since the messages reference is changed by _removeMessage()
+			var vOriginalMessages = vMessages.slice(0);
+			for (var i = 0; i < vOriginalMessages.length; i++) {
+				that._removeMessage(vOriginalMessages[i]);
 			}
-		} else if (vMessages instanceof sap.ui.core.message.Message){
+		} else if (vMessages instanceof Message){
 			that._removeMessage(vMessages);
 		} else {
 			//map with target as key
@@ -251,6 +256,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/model/m
 				var oMsg = aMessages[i];
 				if (jQuery.sap.equal(oMsg, oMessage) && !oMsg.getPersistent()) {
 					aMessages.splice(i,1);
+					--i; // Decrease counter as one element has been removed
 				}
 			}
 		}
@@ -300,7 +306,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/model/m
 	 * @public
 	 */
 	MessageManager.prototype.registerObject = function(oObject, bHandleValidation) {
-		if (!oObject instanceof sap.ui.base.ManagedObject) {
+		if (!oObject instanceof ManagedObject) {
 			jQuery.sap.log.error(this + " : " + oObject.toString() + " is not an instance of sap.ui.base.ManagedObject");
 			return;
 		}
@@ -317,7 +323,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/model/m
 	 * @public
 	 */
 	MessageManager.prototype.unregisterObject = function(oObject) {
-		if (!oObject instanceof sap.ui.base.ManagedObject) {
+		if (!oObject instanceof ManagedObject) {
 			jQuery.sap.log.error(this + " : " + oObject.toString() + " is not an instance of sap.ui.base.ManagedObject");
 			return;
 		}
@@ -365,10 +371,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/model/m
 	MessageManager.prototype.getMessageModel = function() {
 		if (!this.oMessageModel) {
 			this.oMessageModel = new MessageModel(this);
+			this.oMessageModel.setData([]);
 		}
 		return this.oMessageModel;
 	};
 	
 	return MessageManager;
 
-}, /* bExport= */ true);
+});

@@ -3,8 +3,8 @@
  */
 
 // Provides class sap.ui.core.FocusHandler
-sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/Global', 'sap/ui/base/Object', 'jquery.sap.script'],
-	function(jQuery, Device, Global, BaseObject/* , jQuerySap */) {
+sap.ui.define(['jquery.sap.global', '../Device', '../base/Object', 'jquery.sap.script'],
+	function(jQuery, Device, BaseObject/* , jQuerySap */) {
 	"use strict";
 
 
@@ -18,6 +18,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/Global', 'sap/ui/ba
 		 * @param {Element} oRootRef e.g. document.body
 		 * @param {sap.ui.core.Core} oCore Reference to the Core implementation
 		 * @alias sap.ui.core.FocusHandler
+		 * @private
 		 */
 		var FocusHandler = BaseObject.extend("sap.ui.core.FocusHandler", /** @lends sap.ui.core.FocusHandler.prototype */ {
 			constructor : function(oRootRef, oCore) {
@@ -64,7 +65,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/Global', 'sap/ui/ba
 				if ($Act.is(":focus") || (Device.browser.internet_explorer && Device.browser.version == 8 && document.hasFocus())) {
 					aCtrls = $Act.control();
 				}
-			} catch (err) {}
+			} catch (err) {
+				//escape eslint check for empty block
+			}
 			return aCtrls && aCtrls.length > 0 ? aCtrls[0].getId() : null;
 		};
 		
@@ -95,6 +98,22 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/Global', 'sap/ui/ba
 				};
 			}
 			return null;
+		};
+		
+		/**
+		 * If the given control is the last known focused control, the stored focusInfo is updated.
+		 * 
+		 * @see sap.ui.core.FocusHandler#restoreFocus
+		 * @see sap.ui.core.FocusHandler#getControlFocusInfo
+		 * @param {string} oControl the control
+		 * @private
+		 */
+		FocusHandler.prototype.updateControlFocusInfo = function(oControl){
+			if (oControl && this.oLastFocusedControlInfo && this.oLastFocusedControlInfo.control === oControl) {
+				var sControlId = oControl.getId();
+				this.oLastFocusedControlInfo = this.getControlFocusInfo(sControlId);
+				jQuery.sap.log.debug("Update focus info of control " + sControlId, null, "sap.ui.core.FocusHandler");
+			}
 		};
 		
 		/**
@@ -318,4 +337,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/Global', 'sap/ui/ba
 
 	return FocusHandler;
 
-}, /* bExport= */ true);
+});

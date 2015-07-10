@@ -3,8 +3,8 @@
  */
 
 // Provides control sap.m.ListItemBase.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
-	function(jQuery, library, Control) {
+sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/IconPool', 'sap/ui/core/Icon'],
+	function(jQuery, library, Control, IconPool, Icon) {
 	"use strict";
 
 
@@ -100,9 +100,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			detailPress : {}
 		}
 	}});
-		
-	// mode of the list e.g. singleSelection, multi...
-	// internal selected state of the listitem
+	
+	// icon URI configuration
+	ListItemBase.prototype.DetailIconURI = IconPool.getIconURI("edit");
+	ListItemBase.prototype.DeleteIconURI = IconPool.getIconURI("sys-cancel");
+	ListItemBase.prototype.NavigationIconURI = IconPool.getIconURI("slim-arrow-right");
+	
+	// internal active state of the listitem
 	ListItemBase.prototype.init = function() {
 		this._active = false;
 	};
@@ -129,6 +133,16 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		}
 	};
 	
+	/*
+	 * Returns whether selected property is two-way bound or not
+	 * @protected
+	 */
+	ListItemBase.prototype.isSelectedBoundTwoWay = function() {
+		var oBinding = this.getBinding("selected");
+		if (oBinding && oBinding.getBindingMode() == sap.ui.model.BindingMode.TwoWay) {
+			return true;
+		}
+	};
 	
 	/*
 	 * Returns the responsible list control
@@ -136,7 +150,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @returns {sap.m.ListBase|undefined} 
 	 * @protected
 	 */
-	ListItemBase.prototype.getList = function(fnCallback) {
+	ListItemBase.prototype.getList = function() {
 		var oParent = this.getParent();
 		if (oParent instanceof sap.m.ListBase) {
 			return oParent;
@@ -179,6 +193,16 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		}
 	};
 	
+	ListItemBase.prototype.informSelectedChange = function(bSelected) {
+		var oList = this.getList();
+		if (oList) {
+			oList.onItemSelectedChange(this, bSelected);
+			this.bSelectedDelayed = undefined;
+		} else {
+			this.bSelectedDelayed = bSelected;
+		}
+	};
+	
 	/*
 	 * Returns the mode of the current item according to list mode
 	 * Subclasses can overwrite this if item should not have any mode
@@ -202,9 +226,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			return this._oDeleteControl;
 		}
 
-		this._oDeleteControl = new sap.ui.core.Icon({
-			id : this.getId() + "-imgDel",
-			src : sap.ui.core.IconPool.getIconURI("sys-cancel")
+		this._oDeleteControl = new Icon({
+			id: this.getId() + "-imgDel",
+			src: this.DeleteIconURI,
+			useIconTooltip: false,
+			noTabStop: true
 		}).setParent(this, null, true).addStyleClass("sapMLIBIconDel").attachPress(function(oEvent) {
 			this.informList("Delete");
 		}, this);
@@ -223,13 +249,15 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			return this._oDetailControl;
 		}
 
-		this._oDetailControl = new sap.ui.core.Icon({
-			id : this.getId() + "-imgDet",
-			src : sap.ui.core.IconPool.getIconURI("edit")
-		}).setParent(this, null, true).addStyleClass("sapMLIBType sapMLIBIconDet").attachPress(function() {
+		this._oDetailControl = new Icon({
+			id: this.getId() + "-imgDet",
+			src: this.DetailIconURI,
+			useIconTooltip: false,
+			noTabStop: true
+		}).setParent(this, null, true).attachPress(function() {
 			this.fireDetailTap();
 			this.fireDetailPress();
-		}, this);
+		}, this).addStyleClass("sapMLIBType sapMLIBIconDet");
 		
 		return this._oDetailControl;
 	};
@@ -245,9 +273,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			return this._oNavigationControl;
 		}
 
-		this._oNavigationControl = new sap.ui.core.Icon({
-			id : this.getId() + "-imgNav",
-			src : sap.ui.core.IconPool.getIconURI("slim-arrow-right")
+		this._oNavigationControl = new Icon({
+			id: this.getId() + "-imgNav",
+			src: this.NavigationIconURI,
+			useIconTooltip: false,
+			noTabStop: true
 		}).setParent(this, null, true).addStyleClass("sapMLIBType sapMLIBImgNav");
 		
 		return this._oNavigationControl;
@@ -261,7 +291,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 */
 	ListItemBase.prototype.getSingleSelectControl = function() {
 		if (this._oSingleSelectControl) {
-			this._oSingleSelectControl.setSelected(this.getSelected());
 			return this._oSingleSelectControl;
 		}
 
@@ -287,7 +316,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 */
 	ListItemBase.prototype.getMultiSelectControl = function() {
 		if (this._oMultiSelectControl) {
-			this._oMultiSelectControl.setSelected(this.getSelected());
 			return this._oMultiSelectControl;
 		}
 
@@ -310,7 +338,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	 * @returns {sap.ui.core.Control}
 	 * @private
 	 */
-	ListItemBase.prototype.getModeControl = function() {
+	ListItemBase.prototype.getModeControl = function(bUpdate) {
 		var sMode = this.getMode(),
 			mListMode = sap.m.ListMode;
 			
@@ -322,11 +350,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			return this.getDeleteControl();
 		}
 		
+		var oSelectionControl = null;
 		if (sMode == mListMode.MultiSelect) {
-			return this.getMultiSelectControl();
+			oSelectionControl = this.getMultiSelectControl();
+		} else {
+			oSelectionControl = this.getSingleSelectControl();
 		}
 		
-		return this.getSingleSelectControl();
+		if (oSelectionControl && bUpdate) {
+			oSelectionControl.setSelected(this.getSelected());
+		}
+		
+		return oSelectionControl;
 	};
 
 	/**
@@ -358,7 +393,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		aControls.forEach(function(sControl) {
 			sControl = "_o" + sControl + "Control";
 			if (this[sControl]) {
-				this[sControl].destroy();
+				this[sControl].destroy(true);
 				this[sControl] = null;
 			}
 		}, this);
@@ -428,7 +463,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	
 		// notify parent about the selection first
 		if (!bDontNotifyParent) {
-			this.informList("SelectedChange", bSelected);
+			this.informSelectedChange(bSelected);
 		}
 	
 		// update the selection control status
@@ -450,6 +485,22 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 	ListItemBase.prototype.updateSelectedDOM = function(bSelected, $LI) {
 		$LI.toggleClass("sapMLIBSelected", bSelected);
 		$LI.attr("aria-selected", bSelected);
+	};
+	
+	ListItemBase.prototype.setParent = function(oParent) {
+		Control.prototype.setParent.apply(this, arguments);
+		if (!oParent) {
+			return;
+		}
+		
+		this.informList("Inserted", this.bSelectedDelayed);
+		return this;
+	};
+	
+	ListItemBase.prototype.setBindingContext = function() {
+		Control.prototype.setBindingContext.apply(this, arguments);
+		this.informList("BindingContextSet");
+		return this;
 	};
 	
 	/**
@@ -500,12 +551,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 			}
 		}
 	
-		return this;
-	};
-	
-	ListItemBase.prototype.setUnread = function(bUnread) {
-		this.setProperty("unread", bUnread, true);
-		this.$().toggleClass("sapMLIBUnread", bUnread);
 		return this;
 	};
 	
@@ -560,11 +605,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control'],
 		
 		// active handling if not handled already by control
 		// several fingers could be used 
-		// for selections with whole list item interaction and singleselectmaster active handling is disabled
 		if (this._eventHandledByControl || 
 			oEvent.touches.length != 1 || 
-			!this.hasActiveType() || 
-			this.isIncludedIntoSelection()) {
+			!this.hasActiveType()) {
 			return;
 		}
 	

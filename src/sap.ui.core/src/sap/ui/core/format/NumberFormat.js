@@ -3,8 +3,8 @@
  */
 
 // Provides class sap.ui.core.format.NumberFormat
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/LocaleData'],
-	function(jQuery, LocaleData) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', 'sap/ui/core/LocaleData'],
+	function(jQuery, BaseObject, LocaleData) {
 	"use strict";
 
 
@@ -51,7 +51,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/LocaleData'],
 
 	 * @alias sap.ui.core.format.NumberFormat
 	 */
-	var NumberFormat = sap.ui.base.Object.extend("sap.ui.core.format.NumberFormat", /** @lends sap.ui.core.format.NumberFormat.prototype */ {
+	var NumberFormat = BaseObject.extend("sap.ui.core.format.NumberFormat", /** @lends sap.ui.core.format.NumberFormat.prototype */ {
 		constructor : function(oFormatOptions) {
 			// Do not use the constructor
 			throw new Error();
@@ -151,7 +151,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/LocaleData'],
 
 	/*
 	 * Default format options for Integer
-	 * @name sap.ui.core.format.NumberFormat.oDefaultIntegerFormat
 	 */
 	NumberFormat.oDefaultIntegerFormat = {
 		minIntegerDigits: 1,
@@ -174,7 +173,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/LocaleData'],
 
 	/*
 	 * Default format options for Float
-	 * @name sap.ui.core.format.NumberFormat.oDefaultFloatFormat
 	 */
 	NumberFormat.oDefaultFloatFormat = {
 		minIntegerDigits: 1,
@@ -197,7 +195,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/LocaleData'],
 
 	/*
 	* Default format options for Percent
-	* @name sap.ui.core.format.NumberFormat.oDefaultFloatFormat
 	*/
 	NumberFormat.oDefaultPercentFormat = {
 		minIntegerDigits: 1,
@@ -699,10 +696,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/LocaleData'],
 	 */
 	NumberFormat.prototype.parse = function(sValue) {
 		var oOptions = this.oFormatOptions,
-			sRegExpFloat = "^\\s*([+-]?(?:[0-9\\" + oOptions.groupingSeparator + "]+|[0-9\\" + oOptions.groupingSeparator + "]*\\" + oOptions.decimalSeparator + "[0-9]+)(?:[eE][+-][0-9]+)?)\\s*$",
-			sRegExpInt = "^\\s*([+-]?[0-9\\" + oOptions.groupingSeparator + "]+)\\s*$",
-			oGroupingRegExp = new RegExp("\\" + oOptions.groupingSeparator, "g"),
-			oDecimalRegExp = new RegExp("\\" + oOptions.decimalSeparator, "g"),
+			sPlusMinusSigns = quote(oOptions.plusSign + oOptions.minusSign),
+			sGroupingSeparator = quote(oOptions.groupingSeparator),
+			sDecimalSeparator = quote(oOptions.decimalSeparator),
+			sRegExpFloat = "^\\s*([" + sPlusMinusSigns + "]?(?:[0-9" + sGroupingSeparator + "]+|[0-9" + sGroupingSeparator + "]*" + sDecimalSeparator + "[0-9]*)(?:[eE][+-][0-9]+)?)\\s*$",
+			sRegExpInt = "^\\s*([" + sPlusMinusSigns + "]?[0-9" + sGroupingSeparator + "]+)\\s*$",
+			oGroupingRegExp = new RegExp(sGroupingSeparator, "g"),
+			oDecimalRegExp = new RegExp(sDecimalSeparator, "g"),
 			sPercentPattern = this.oLocaleData.getPercentPattern(),
 			sPercentSign = this.oLocaleData.getNumberSymbol("percentSign"),
 			oRegExp, bPercent, sRegExpCurrency, sRegExpCurrencyMeasure, aParsed, sCurrencyMeasure,
@@ -759,6 +759,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/LocaleData'],
 		// Remove grouping separator and replace locale dependant decimal separator,
 		// before calling parseInt/parseFloat
 		sValue = sValue.replace(oGroupingRegExp, "");
+		sValue = sValue.replace(oOptions.plusSign, "+");
+		sValue = sValue.replace(oOptions.minusSign, "-");
 
 		// Remove the leading "+" sign because when "parseAsString" is set to true the "parseInt" or "parseFloat" isn't called and the leading "+" has to be moved manually
 		sValue = sValue.replace(/^\+/, "");
@@ -1077,6 +1079,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/LocaleData'],
 		return fValue;
 	}
 
+	function quote(sRegex) {
+		return sRegex.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
+	}
+
 	return NumberFormat;
 
-}, /* bExport= */ true);
+});

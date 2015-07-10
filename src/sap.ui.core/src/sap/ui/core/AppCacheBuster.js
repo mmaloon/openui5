@@ -5,12 +5,10 @@
 /*
  * Provides the AppCacheBuster mechanism to load application files using a timestamp
  */
-sap.ui.define(['jquery.sap.global', './Core', 'sap/ui/thirdparty/URI'],
-	function(jQuery, Core, URI1) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Core', 'sap/ui/thirdparty/URI'],
+	function(jQuery, ManagedObject, Core, URI) {
 	"use strict";
 
-	/*global URI *///declare unusual global vars for JSLint/SAPUI5 validation
-	
 	/*
 	 * The AppCacheBuster is only aware of resources which are relative to the
 	 * current application or have been registered via:
@@ -56,7 +54,7 @@ sap.ui.define(['jquery.sap.global', './Core', 'sap/ui/thirdparty/URI'],
 	var fnAjaxOrig = jQuery.ajax;
 	var fnIncludeScript = jQuery.sap.includeScript;
 	var fnIncludeStyleSheet = jQuery.sap.includeStyleSheet;
-	var fnValidateProperty = sap.ui.base.ManagedObject.prototype.validateProperty;
+	var fnValidateProperty = ManagedObject.prototype.validateProperty;
 	
 	// determine the application base url
 	var sLocation = document.location.href.replace(/\?.*|#.*/g, "");
@@ -148,7 +146,7 @@ sap.ui.define(['jquery.sap.global', './Core', 'sap/ui/thirdparty/URI'],
 						data: sContent.join("\n"),
 						success: function(data) {
 							// notify that the content has been loaded
-							sap.ui.core.AppCacheBuster.onIndexLoaded(sUrl, data);
+							AppCacheBuster.onIndexLoaded(sUrl, data);
 							// add the index file to the index map
 							jQuery.extend(mIndex, data);
 						},
@@ -186,7 +184,7 @@ sap.ui.define(['jquery.sap.global', './Core', 'sap/ui/thirdparty/URI'],
 						dataType: "json",
 						success: function(data) {
 							// notify that the content has been loaded
-							sap.ui.core.AppCacheBuster.onIndexLoaded(sUrl, data);
+							AppCacheBuster.onIndexLoaded(sUrl, data);
 							// add the index file to the index map
 							mIndex[sAbsoluteBaseUrl] = data;
 						},
@@ -203,7 +201,7 @@ sap.ui.define(['jquery.sap.global', './Core', 'sap/ui/thirdparty/URI'],
 		if (oRequest) {
 			
 			// hook to onIndexLoad to allow to inject the index file manually
-			var mIndexInfo = sap.ui.core.AppCacheBuster.onIndexLoad(oRequest.url);
+			var mIndexInfo = AppCacheBuster.onIndexLoad(oRequest.url);
 			// if anything else than undefined or null is returned we will use this
 			// content as data for the cache buster index
 			if (mIndexInfo != null) {
@@ -362,7 +360,7 @@ sap.ui.define(['jquery.sap.global', './Core', 'sap/ui/thirdparty/URI'],
 				// enhance the validateProperty function to intercept URI types
 				//  test via: new sap.ui.commons.Image({src: "acctest/img/Employee.png"}).getSrc()
 				//            new sap.ui.commons.Image({src: "./acctest/../acctest/img/Employee.png"}).getSrc()
-				sap.ui.base.ManagedObject.prototype.validateProperty = function(sPropertyName, oValue) {
+				ManagedObject.prototype.validateProperty = function(sPropertyName, oValue) {
 					var oMetadata = this.getMetadata(),
 						oProperty = oMetadata.getProperty(sPropertyName),
 						oArgs;
@@ -395,7 +393,7 @@ sap.ui.define(['jquery.sap.global', './Core', 'sap/ui/thirdparty/URI'],
 				jQuery.ajax = fnAjaxOrig;
 				jQuery.sap.includeScript = fnIncludeScript;
 				jQuery.sap.includeStyleSheet = fnIncludeStyleSheet;
-				sap.ui.base.ManagedObject.prototype.validateProperty = fnValidateProperty;
+				ManagedObject.prototype.validateProperty = fnValidateProperty;
 				
 				// clear the index
 				mIndex = {};

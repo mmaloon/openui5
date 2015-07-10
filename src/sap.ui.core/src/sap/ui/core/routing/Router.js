@@ -2,9 +2,8 @@
  * ${copyright}
  */
 
-/*global crossroads */
-sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/base/ManagedObject', './HashChanger', './Route', './Views', './Targets', 'sap/ui/thirdparty/crossroads', 'sap/ui/thirdparty/signals'],
-	function($, EventProvider, ManagedObject, HashChanger, Route, Views, Targets) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger', './Route', './Views', './Targets', 'sap/ui/thirdparty/crossroads'],
+	function($, EventProvider, HashChanger, Route, Views, Targets, crossroads) {
 	"use strict";
 
 		var oRouters = {};
@@ -706,4 +705,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/base/Ma
 
 	return Router;
 
-}, /* bExport= */ true);
+});

@@ -209,6 +209,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
 		this._proxyOpened = jQuery.proxy(fnPopupOpened, this);
 		this._proxyClosed = jQuery.proxy(fnOnClosed, this);
 		this._proxyFixSize = jQuery.proxy(fnFixSize, this);
+		this._proxyOnResize = jQuery.proxy(fnOnResize, this);
 
 		fnSetArrowDimensions(this);
 	};
@@ -227,10 +228,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
 		delete this._bPreventRestoreFocus;
 		delete this._proxyOpened;
 		delete this._proxyClosed;
-
-		if (this._bBoundOnResize) {
-			jQuery(window).unbind("resize", this._proxyFixSize);
-		}
 
 		delete this._bRTL;
 		delete this._sArrowDir;
@@ -279,8 +276,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
 				oElement = jQuery.sap.domById(that._mParameters.firstFocusable);
 			}
 
-			jQuery.sap.focus(oElement);
-			that._sInitialFocusId = oElement.id;
+			// oElement might not be available if this function is called during destroy
+			if (oElement) {
+				jQuery.sap.focus(oElement);
+				that._sInitialFocusId = oElement.id;
+			}
+
 		} else {
 			that._sInitialFocusId = that.oPopup._sInitialFocusId;
 		}
@@ -387,13 +388,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
 					jQuery.sap.log.warning(sMessage, "", "sap.ui.ux3.ToolPopup");
 				}
 			}
+
+			iMaxHeight = iMaxHeight ? iMaxHeight : iWinHeight - oThisRect.top;
 		}
 
-		if (!bTooHigh) {
-			$This.toggleClass("sapUiUx3TPLargeContent", false);
-		}
+		$This.toggleClass("sapUiUx3TPLargeContent", bTooHigh);
 
-		if (iMaxHeight > 0) {
+		if (iMaxHeight || bTooHigh) {
 			$This.css("max-height", iMaxHeight + "px");
 
 			var $Title = this.$("title");
@@ -451,6 +452,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
 			}
 		}
 
+		if (!this._sResizeID) {
+			// register the ResizeHandler for the content of the toolPopup and not the whole toolPopup itself.
+			// In this way when resized the toolPopup does not change its height indefinitely.
+			this._sResizeID = sap.ui.core.ResizeHandler.register(this.$('content')[0], this._proxyOnResize);
+		}
+
 		// forward the Popup's opened event accordingly
 		// was added in "1.19.0" as a fix for a CSN and was downported to "1.18.2" and "1.16.6"
 		this.fireOpened();
@@ -465,10 +472,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	ToolPopup.prototype.isOpen = function() {
-		if (this.oPopup && this.oPopup.isOpen()) {
-			return true;
-		}
-		return false;
+		return this.oPopup && (this.oPopup.getOpenState() == "OPENING" || this.oPopup.getOpenState() == "OPEN");
 	};
 
 	ToolPopup.prototype.willBeClosed = function() {
@@ -851,6 +855,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
 		if (!this._bPreventRestoreFocus) {
 			Popup.applyFocusInfo(this._oPreviousFocus);
 		}
+		
+		// Not removing the content DOM leads to the  problem that control DOM with the same ID exists in two places if
+		// the control is added to a different aggregation without the dialog being destroyed. In this special case the
+		// RichTextEditor (as an example) renders a textarea-element and afterwards tells the TinyMCE component which ID
+		// to use for rendering; since there are two elements with the same ID at that point, it does not work.
+		// As the Dialog can only contain other controls, we can safely discard the DOM - we cannot do this inside
+		// the Popup, since it supports displaying arbitrary HTML content.
+		this.$().remove();
+		
 		this.fireClosed();
 	};
 
@@ -867,13 +880,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
 	 */
 	ToolPopup.prototype.close = function(bPreventRestoreFocus) {
 		if (this.oPopup && this.oPopup.isOpen()) {
-			if (this._bBoundOnResize) {
-				jQuery(window).unbind("resize", this._proxyFixSize);
-				delete this._bBoundOnResize;
+			if (this._sResizeID) {
+				sap.ui.core.ResizeHandler.deregister(this._sResizeID);
+				delete this._sResizeID;
 			}
 
 			this.oPopup.close(this.getCloseDuration());
 			this._bPreventRestoreFocus = bPreventRestoreFocus;
+
 		}
 		return this;
 	};
@@ -983,6 +997,17 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
 		return this.oPopup;
 	};
 
+	var fnOnResize = function() {
+		if (this.getContent().length) {
+			// This fixes the height of the ToolPopup if the height exceeds the window height.
+			// Maybe there is a Layout as content that changed its aggregation
+			this._proxyFixSize();
+
+			// If the height/width changed the Popup's position has to be fixed as well.
+			// Setting the arrow isn't needed after that because it happens inside "_applyPosition"
+			this.oPopup._applyPosition(this.oPopup._oLastPosition);
+		}
+	};
 
 	/**
 	 * Sets the position of the pop up, the same parameters as for sap.ui.core.Popup can be used.
@@ -1009,10 +1034,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Control', 'sap/ui/core/IconPool
 
 		// this fixes the height of the ToolPopup if the height exceeds the window height
 		that._proxyFixSize();
-		// if the height/width changed the Popup's position has to be fixed as well
+		// If the height/width changed the Popup's position has to be fixed as well
+		// Setting the arrow isn't needed after that because it happens inside "_applyPosition"
 		that.oPopup._applyPosition(that.oPopup._oLastPosition);
-		// fix the arrow's position
-		fnSetArrow(that);
 	};
 
 	var fnRenderContent = function(oThis) {

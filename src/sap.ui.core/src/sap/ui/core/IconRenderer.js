@@ -1,8 +1,7 @@
 /*!
  * ${copyright}
  */
-sap.ui.define(["jquery.sap.global"],
-	function(jQuery) {
+sap.ui.define(function() {
 	"use strict";
 
 	/**
@@ -26,23 +25,24 @@ sap.ui.define(["jquery.sap.global"],
 			sColor = oControl.getColor(),
 			sBackgroundColor = oControl.getBackgroundColor(),
 			sSize = oControl.getSize(),
-			sTooltip = oControl.getTooltip_AsString();
+			sTooltip = oControl.getTooltip_AsString(),
+			bUseIconTooltip = oControl.getUseIconTooltip(),
+			bNoTabStop = oControl.getNoTabStop();
 
 		oRm.write("<span");
 		oRm.writeControlData(oControl);
+		oRm.writeAccessibilityState(oControl, oControl._getAccessibilityAttributes());
 
-		if (!oControl.getDecorative()) {
-			oRm.writeAttribute("tabindex", 0);
+		if (sTooltip || (bUseIconTooltip && oIconInfo)) {
+			oRm.writeAttribute("title", sTooltip || oIconInfo.text || oIconInfo.name);
 		}
 
-		if (sTooltip) {
-			oRm.writeAttributeEscaped("title", sTooltip);
+		if (oControl.hasListeners("press") && !bNoTabStop) {
+			oRm.writeAttribute("tabindex", 0);
 		}
 
 		if (oIconInfo) {
 			oRm.writeAttribute("data-sap-ui-icon-content", oIconInfo.content);
-			oRm.writeAttribute("role", "img");
-			oRm.writeAttributeEscaped("aria-label", sTooltip || oIconInfo.name);
 			oRm.addStyle("font-family", "'" + oIconInfo.fontFamily + "'");
 		}
 

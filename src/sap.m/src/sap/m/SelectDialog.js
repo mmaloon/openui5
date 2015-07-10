@@ -214,6 +214,13 @@ sap.ui.define(['jquery.sap.global', './Button', './Dialog', './List', './SearchF
 				}
 			}
 		});
+
+		this._oList.getInfoToolbar().addEventDelegate({
+			onAfterRendering: function () {
+				that._oList.getInfoToolbar().$().attr('aria-live', 'polite');
+			}
+		});
+
 		this._list = this._oList; // for downward compatibility
 
 		// attach events to listen to model updates and show/hide a busy indicator
@@ -309,14 +316,14 @@ sap.ui.define(['jquery.sap.global', './Button', './Dialog', './List', './SearchF
 		this._bFirstRender = false;
 		this._bFirstRequest = false;
 
-		// sap.ui.core.Popup removes its content on close()/destroy() automatically from the static UIArea, 
+		// sap.ui.core.Popup removes its content on close()/destroy() automatically from the static UIArea,
 		// but only if it added it there itself. As we did that, we have to remove it also on our own
 		if ( this._bAppendedToUIArea ) {
 			var oStatic = sap.ui.getCore().getStaticAreaRef();
 			oStatic = sap.ui.getCore().getUIArea(oStatic);
 			oStatic.removeContent(this, true);
 		}
-	
+
 		// controls not managed in aggregations
 		if (this._oDialog) {
 			this._oDialog.destroy();
@@ -807,14 +814,14 @@ sap.ui.define(['jquery.sap.global', './Button', './Dialog', './List', './SearchF
 	SelectDialog.prototype._setBusy = function (bBusy) {
 		if (this._iListUpdateRequested) { // check if the event was caused by our control
 			if (bBusy) {
-				if (this._bFirstRequest) { // also hide the header bar for the first request
-					this._oSubHeader.$().css('display', 'none');
+				if (this._bFirstRequest) { // also disable the search field for the first request
+					this._oSearchField.setEnabled(false);
 				}
 				this._oList.addStyleClass('sapMSelectDialogListHide');
 				this._oBusyIndicator.$().css('display', 'inline-block');
 			} else {
-				if (this._bFirstRequest) { // also show the header bar again for the first request
-					this._oSubHeader.$().css('display', 'block');
+				if (this._bFirstRequest) { // also enable the search field again for the first request
+					this._oSearchField.setEnabled(true);
 				}
 				this._oList.removeStyleClass('sapMSelectDialogListHide');
 				this._oBusyIndicator.$().css('display', 'none');

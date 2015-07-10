@@ -98,6 +98,12 @@ sap.ui.define(['jquery.sap.global', './ComboBoxBase', './ComboBoxRenderer', './l
 			this.scrollToItem(this.getList().getSelectedItem());
 		}
 
+		function fnSelectTextIfFocused(iStart, iEnd) {
+			if (document.activeElement === this.getFocusDomRef()) {
+				this.selectText(iStart, iEnd);
+			}
+		}
+
 		/* ----------------------------------------------------------- */
 		/* Popover                                                     */
 		/* ----------------------------------------------------------- */
@@ -117,7 +123,8 @@ sap.ui.define(['jquery.sap.global', './ComboBoxBase', './ComboBoxRenderer', './l
 				offsetX: 0,
 				offsetY: 0,
 				initialFocus: this,
-				bounce: false
+				bounce: false,
+				showArrow: false
 			});
 
 			this._decoratePopover(oPicker);
@@ -133,41 +140,23 @@ sap.ui.define(['jquery.sap.global', './ComboBoxBase', './ComboBoxRenderer', './l
 		ComboBox.prototype._decoratePopover = function(oPopover) {
 			var that = this;
 
-			// adding additional capabilities to the Popover
-			oPopover._removeArrow = function() {
-				this._marginTop = 0;
-				this._marginLeft = 0;
-				this._marginRight = 0;
-				this._marginBottom = 0;
-				this._arrowOffset = 0;
-				this._offsets = ["0 0", "0 0", "0 0", "0 0"];
-			};
-
-			oPopover._setPosition = function() {
-				this._myPositions = ["begin bottom", "begin center", "begin top", "end center"];
-				this._atPositions = ["begin top", "end center", "begin bottom", "begin center"];
-			};
-
-			oPopover._setArrowPosition = function() {};
-
 			oPopover.open = function() {
 				return this.openBy(that.getFocusDomRef());
 			};
 		};
 
 		/**
-		 * Required adaptations after rendering of the Popover.
+		 * Synchronize the width of the picker pop-up with the width of the input field.
 		 *
 		 * @private
+		 * @since 1.30
 		 */
-		ComboBox.prototype.onAfterRenderingPopover = function() {
-			var oPopover = this.getPicker();
+		ComboBox.prototype._synchronizePickerWidth = function() {
+			var oDomRef = this.getDomRef();
 
-			// remove the Popover arrow
-			oPopover._removeArrow();
-
-			// position adaptations
-			oPopover._setPosition();
+			if (oDomRef) {
+				this.getPicker().setContentWidth((oDomRef.offsetWidth / parseFloat(sap.m.BaseFontSize)) + "rem");
+			}
 		};
 
 		/* ----------------------------------------------------------- */
@@ -241,8 +230,9 @@ sap.ui.define(['jquery.sap.global', './ComboBoxBase', './ComboBoxRenderer', './l
 		ComboBox.prototype.oninput = function(oEvent) {
 			ComboBoxBase.prototype.oninput.apply(this, arguments);
 
-			// note: suppress input events of read-only fields (IE11)
-			if (!this.getEditable()) {
+			// note: input event can be buggy
+			// @see sap.m.InputBase#oninput
+			if (oEvent.isMarked("invalid")) {
 				return;
 			}
 
@@ -290,7 +280,14 @@ sap.ui.define(['jquery.sap.global', './ComboBoxBase', './ComboBoxRenderer', './l
 					}
 
 					if (this._bDoTypeAhead) {
-						this.selectText(sValue.length, 9999999);
+
+						if (sap.ui.Device.os.blackberry) {
+
+							// note: timeout required for a BlackBerry bug
+							setTimeout(fnSelectTextIfFocused.bind(this, sValue.length, this.getValue().length), 0);
+						} else {
+							this.selectText(sValue.length, 9999999);
+						}
 					}
 
 					this.scrollToItem(this.getList().getSelectedItem());
@@ -886,6 +883,7 @@ sap.ui.define(['jquery.sap.global', './ComboBoxBase', './ComboBoxRenderer', './l
 			// call the hook to add additional content to the List
 			this.addContent();
 
+			sap.ui.Device.resize.attachHandler(this._synchronizePickerWidth, this);
 			fnPickerTypeBeforeOpen && fnPickerTypeBeforeOpen.call(this);
 		};
 
@@ -895,11 +893,7 @@ sap.ui.define(['jquery.sap.global', './ComboBoxBase', './ComboBoxRenderer', './l
 		 * @protected
 		 */
 		ComboBox.prototype.onBeforeOpenPopover = function() {
-			var oDomRef = this.getDomRef();
-
-			if (oDomRef) {
-				this.getPicker().setContentWidth((oDomRef.offsetWidth / parseFloat(sap.m.BaseFontSize)) + "rem");
-			}
+			this._synchronizePickerWidth();
 		};
 
 		/*
@@ -938,6 +932,7 @@ sap.ui.define(['jquery.sap.global', './ComboBoxBase', './ComboBoxRenderer', './l
 
 			// remove the active state of the control's field
 			this.removeStyleClass(sap.m.ComboBoxBaseRenderer.CSS_CLASS + "Pressed");
+			sap.ui.Device.resize.detachHandler(this._synchronizePickerWidth, this);
 		};
 
 		/*
@@ -1060,10 +1055,6 @@ sap.ui.define(['jquery.sap.global', './ComboBoxBase', './ComboBoxRenderer', './l
 		/**
 		 * Setter for property <code>selectedItemId</code>.
 		 *
-		 * Default value is an empty string <code>""</code> or <code>undefined</code>.
-		 * If the provided <code>vItem</code> has a default value,
-		 * the first enabled item will be selected (if any).
-		 *
 		 * @param {string | undefined} vItem New value for property <code>selectedItemId</code>.
 		 * @returns {sap.m.ComboBox} <code>this</code> to allow method chaining.
 		 * @public
@@ -1097,12 +1088,6 @@ sap.ui.define(['jquery.sap.global', './ComboBoxBase', './ComboBoxRenderer', './l
 		/**
 		 * Setter for property <code>selectedKey</code>.
 		 *
-		 * Default value is an empty string <code>""</code> or <code>undefined</code>.
-		 *
-		 * If the provided <code>sKey</code> has a default value,
-		 * the first enabled item will be selected (if any).
-		 * In the case that an item has the default key value, it will be selected instead.
-		 *
 		 * @param {string} sKey New value for property <code>selectedKey</code>.
 		 * @returns {sap.m.ComboBox} <code>this</code> to allow method chaining.
 		 * @public
@@ -1113,9 +1098,6 @@ sap.ui.define(['jquery.sap.global', './ComboBoxBase', './ComboBoxRenderer', './l
 
 			if (oItem || (sKey === "")) {
 
-				// If the "sKey" value is an empty string "" or undefined,
-				// the first enabled item will be selected (if any).
-				// In the case that an item has the default key value, it will be selected instead.
 				if (!oItem && sKey === "") {
 					oItem = this.getDefaultSelectedItem();
 				}

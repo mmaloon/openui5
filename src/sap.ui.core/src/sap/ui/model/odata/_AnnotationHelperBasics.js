@@ -69,9 +69,10 @@ sap.ui.define([
 		 *   the message to log
 		 */
 		error: function (oPathValue, sMessage) {
-			jQuery.sap.log.error(oPathValue.path + ": " + sMessage,
-				Basics.toErrorString(oPathValue.value), "sap.ui.model.odata.AnnotationHelper");
-			throw new SyntaxError();
+			sMessage = oPathValue.path + ": " + sMessage;
+			jQuery.sap.log.error(sMessage, Basics.toErrorString(oPathValue.value),
+					"sap.ui.model.odata.AnnotationHelper");
+			throw new SyntaxError(sMessage);
 		},
 
 		/**
@@ -144,7 +145,7 @@ sap.ui.define([
 		 *   if true the value is to be embedded into a binding expression, otherwise in a
 		 *   composite binding
 		 * @param {boolean} [bWithType=false]
-		 * 	 if <code>true</code> and <code>oResult.result</code> is "binding" and
+		 *  if <code>true</code> and <code>oResult.result</code> is "binding" and
 		 *  <code>bExpression</code> is <code>false</code>, type and constraint information is
 		 *  written to the resulting binding string
 		 * @returns {string}
@@ -156,6 +157,7 @@ sap.ui.define([
 			function binding(bAddType) {
 				var sConstraints, sResult;
 
+				bAddType = bAddType && !oResult.ignoreTypeInPath;
 				if (rBadChars.test(vValue) || bAddType) {
 					sResult = "{path:" + Basics.toJSON(vValue);
 					if (bAddType && oResult.type) {
@@ -180,7 +182,10 @@ sap.ui.define([
 				}
 				return vValue;
 			case "constant":
-				return bExpression ? Basics.toJavaScript(vValue)
+				if (oResult.type === "edm:Null") {
+					return bExpression ? "null" : null;
+				}
+				return bExpression ? Basics.toJSON(vValue)
 						: BindingParser.complexParser.escape(vValue);
 			case "expression":
 				return bExpression ? vValue : "{=" + vValue + "}";
@@ -196,37 +201,22 @@ sap.ui.define([
 		 * @returns {string} the stringified value
 		 */
 		toErrorString: function (vValue) {
+			var sJSON;
+
 			if (typeof vValue !== "function") {
 				try {
-					return Basics.toJavaScript(vValue);
+					sJSON = Basics.toJSON(vValue);
+					// undefined --> undefined
+					// null, NaN, Infinity --> "null"
+					// all are correctly handled by String
+					if (sJSON !== undefined && sJSON !== "null") {
+						return sJSON;
+					}
 				} catch (e) {
 					// "converting circular structure to JSON"
 				}
 			}
 			return String(vValue);
-		},
-
-		/**
-		 * Converts the value to a JavaScript string. Prefers the single quote over the double
-		 * quote. This suits better for usage in an XML attribute.
-		 *
-		 * @param {any} vValue the value
-		 * @returns {string} the stringified value
-		 */
-		toJavaScript: function (vValue) {
-			var sJSON;
-
-			if (typeof vValue === "function") {
-				throw new Error("Cannot write a function to a Javascript string");
-			}
-			sJSON = Basics.toJSON(vValue);
-			if (sJSON === undefined || sJSON === "null") {
-				// undefined --> undefined
-				// null, NaN, Infinity --> "null"
-				// all are correctly handled by String
-				return String(vValue);
-			}
-			return sJSON;
 		},
 
 		/**

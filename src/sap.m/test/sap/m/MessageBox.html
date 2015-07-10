@@ -51,7 +51,14 @@
 
 		var oSwitch = sap.m.Switch({
 			customTextOn: "CPT",
-			customTextOff: "CZY"
+			customTextOff: "CZY",
+			change: function (ev) {
+				var $body = jQuery("body");
+
+				ev.getParameter("state") ?
+					$body.addClass("sapUiSizeCompact") :
+					$body.removeClass("sapUiSizeCompact");
+			}
 		});
 
 		jQuery.map(sap.m.MessageBox.Action, function (value, key) {
@@ -61,8 +68,7 @@
 					sap.m.MessageBox.show(sMessage, {
 						icon: oSelect.getSelectedItem().getProperty("key"),
 						title: sTitle,
-						actions: key,
-						styleClass: oSwitch.getState() ? "sapUiSizeCompact" : ""
+						actions: key
 					});
 				}
 			}));
@@ -74,8 +80,7 @@
 				sap.m.MessageBox.confirm("Confirmation dialog is opened?", {
 					onClose: function (bConfirmed) {
 						jQuery.sap.log.info("Dialog is " + (bConfirmed ? "" : "NOT ") + "confirmed");
-					},
-					styleClass: oSwitch.getState() ? "sapUiSizeCompact" : ""
+					}
 				});
 			}
 		}));
@@ -83,9 +88,7 @@
 		oHL.addContent(new sap.m.Button({
 			text: "Alert",
 			press: function () {
-				sap.m.MessageBox.alert("Alert some message", {
-					styleClass: oSwitch.getState() ? "sapUiSizeCompact" : ""
-				});
+				sap.m.MessageBox.alert("Alert some message");
 			}
 		}));
 
@@ -120,9 +123,7 @@
 								}
 							},
 							dialogId: "messageBoxId",
-							initialFocus: sap.m.MessageBox.Action.NO,
-							styleClass: oSwitch.getState() ? "sapUiSizeCompact" : ""
-
+							initialFocus: sap.m.MessageBox.Action.NO
 						}
 				);
 			}
@@ -143,7 +144,6 @@
 					},
 					icon: sap.m.MessageBox.Icon.INFORMATION,
 					title: "Set initial button focus",
-					styleClass: oSwitch.getState() ? "sapUiSizeCompact" : "",
 					initialFocus: sap.m.MessageBox.Action.CANCEL
 				});
 			}
@@ -159,8 +159,7 @@
 					actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO, "Custom button text"],
 					id: "messageBoxId1",
 					defaultAction: sap.m.MessageBox.Action.NO,
-					initialFocus: "Custom button text",
-					styleClass: oSwitch.getState() ? "sapUiSizeCompact" : ""
+					initialFocus: "Custom button text"
 				});
 			}
 		}));
@@ -200,8 +199,7 @@
 							},
 							dialogId: "messageBoxId",
 							class: "",
-							initialFocus: oCheck2,
-							styleClass: oSwitch.getState() ? "sapUiSizeCompact" : ""
+							initialFocus: oCheck2
 						}
 				);
 			}
@@ -213,7 +211,7 @@
 				})
 		);
 
-		var sLongText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus. Sed gravida sagittis semper. Maecenas non eros arcu. Aenean pharetra faucibus nisl sed cursus. Morbi ultrices lacus et facilisis venenatis. In porta pharetra libero, in maximus turpis semper vitae. Donec lectus mauris, consequat ut tincidunt pharetra, posuere vitae massa. Suspendisse rutrum ipsum dui, pulvinar mollis dolor ullamcorper a. Nam eleifend, neque sit amet dignissim commodo, mi lacus feugiat nunc, in elementum tortor enim congue purus.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus. Sed gravida sagittis semper. Maecenas non eros arcu. Aenean pharetra faucibus nisl sed cursus. Morbi ultrices lacus et facilisis venenatis. In porta pharetra libero, in maximus turpis semper vitae. Donec lectus mauris, consequat ut tincidunt pharetra, posuere vitae massa. Suspendisse rutrum ipsum dui, pulvinar mollis dolor ullamcorper a. Nam eleifend, neque sit amet dignissim commodo, mi lacus feugiat nunc, in elementum tortor enim congue purus.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus. Sed gravida sagittis semper. Maecenas non eros arcu. Aenean pharetra faucibus nisl sed cursus. Morbi ultrices lacus et facilisis venenatis. In porta pharetra libero, in maximus turpis semper vitae. Donec lectus mauris, consequat ut tincidunt pharetra, posuere vitae massa. Suspendisse rutrum ipsum dui, pulvinar mollis dolor ullamcorper a. Nam eleifend, neque sit amet dignissim commodo, mi lacus feugiat nunc, in elementum tortor enim congue purus.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus.";
+		var sLongText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Dnec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus. Sed gravida sagittis semper. Maecenas non eros arcu. Aenean pharetra faucibus nisl sed cursus. Morbi ultrices lacus et facilisis venenatis. In porta pharetra libero, in maximus turpis semper vitae. Donec lectus mauris, consequat ut tincidunt pharetra, posuere vitae massa. Suspendisse rutrum ipsum dui, pulvinar mollis dolor ullamcorper a. Nam eleifend, neque sit amet dignissim commodo, mi lacus feugiat nunc, in elementum tortor enim congue purus.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus. Sed gravida sagittis semper. Maecenas non eros arcu. Aenean pharetra faucibus nisl sed cursus. Morbi ultrices lacus et facilisis venenatis. In porta pharetra libero, in maximus turpis semper vitae. Donec lectus mauris, consequat ut tincidunt pharetra, posuere vitae massa. Suspendisse rutrum ipsum dui, pulvinar mollis dolor ullamcorper a. Nam eleifend, neque sit amet dignissim commodo, mi lacus feugiat nunc, in elementum tortor enim congue purus.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus. Sed gravida sagittis semper. Maecenas non eros arcu. Aenean pharetra faucibus nisl sed cursus. Morbi ultrices lacus et facilisis venenatis. In porta pharetra libero, in maximus turpis semper vitae. Donec lectus mauris, consequat ut tincidunt pharetra, posuere vitae massa. Suspendisse rutrum ipsum dui, pulvinar mollis dolor ullamcorper a. Nam eleifend, neque sit amet dignissim commodo, mi lacus feugiat nunc, in elementum tortor enim congue purus.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec volutpat metus neque, ut hendrerit odio gravida hendrerit. Donec pellentesque, sem sed vestibulum tristique, lectus nulla gravida lacus, sed facilisis purus ipsum a odio. Pellentesque nisl nibh, euismod et sapien a, laoreet convallis lectus. Donec sed sollicitudin dolor, at luctus eros. Aliquam varius mauris vitae sapien aliquam sollicitudin. Curabitur auctor mattis enim, eget fermentum augue vehicula in. Mauris tempus magna nec vehicula lobortis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla arcu augue, finibus quis quam nec, sagittis blandit turpis.	Maecenas id nisi molestie, varius lacus vitae, luctus diam. Interdum et malesuada fames ac ante ipsum primis in faucibus. Curabitur consequat fringilla faucibus.";
 
 
 		oVL.addContent(new sap.m.Button({
@@ -255,8 +253,7 @@
 					},
 					id: "messageBoxId",
 					verticalScrolling: false,
-					horizontalScrolling: true,
-					styleClass: oSwitch.getState() ? "sapUiSizeCompact" : ""
+					horizontalScrolling: true
 				});
 			}
 		}));
@@ -302,9 +299,7 @@
 					},
 					id: "messageBoxId",
 					verticalScrolling: false,
-					horizontalScrolling: false,
-					styleClass: oSwitch.getState() ? "sapUiSizeCompact" : ""
-
+					horizontalScrolling: false
 				});
 			}
 		}));
@@ -313,17 +308,7 @@
 			text: "Long text",
 			width: "270px",
 			press: function () {
-				var oLayout = new sap.ui.layout.VerticalLayout({
-					width: "100%",
-					content: [
-						new sap.m.Text({
-							text: sLongText,
-							wrapping: true
-						})
-					]
-				});
-
-				sap.m.MessageBox.show(oLayout, {
+				sap.m.MessageBox.show(sLongText, {
 					icon: sap.m.MessageBox.Icon.WARNING,
 					title: "MessageBox title",
 					actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
@@ -408,6 +393,28 @@
 			}
 		}));
 
+		oVL.addContent(new sap.m.Button({
+			text: "Show JSON details in control",
+			width: "270px",
+			press: function () {
+				var oJSON = {
+					"success": false,
+					"error": {
+						"code": 231,
+						"message": "An error occurred!"
+					}
+				}
+				sap.m.MessageBox.show("Error message", {
+					icon: sap.m.MessageBox.Icon.ERROR,
+					title: "Error",
+					actions: [sap.m.MessageBox.Action.OK],
+					id: "messageBoxId1",
+					defaultAction: sap.m.MessageBox.Action.OK,
+					details: oJSON
+				});
+			}
+		}));
+
 		oVL.addContent(new sap.m.Text("text4", {
 					text: "\n Deprecated syntax"
 				})
@@ -458,6 +465,33 @@
 			}
 		}));
 
+		oVL.addContent(new sap.m.Button({
+			text: "Error",
+			width: "270px",
+			press: function () {
+				sap.m.MessageBox.error("This is an error message!")
+		}}));
+
+		oVL.addContent(new sap.m.Button({
+			text: "Information",
+			width: "270px",
+			press: function () {
+				sap.m.MessageBox.information("This is an info message!")
+			}}));
+
+		oVL.addContent(new sap.m.Button({
+			text: "Warning",
+			width: "270px",
+			press: function () {
+				sap.m.MessageBox.warning("This is a warning message!")
+			}}));
+
+		oVL.addContent(new sap.m.Button({
+			text: "Success",
+			width: "270px",
+			press: function () {
+				sap.m.MessageBox.success("This is a success message!")
+			}}));
 
 		oVL.addContent(new sap.m.Text("heading", {
 			text: "\n Below are examples for testing the right-to-left special cases such as numerals, phone numbers, etc. To switch the page direction to right-to-left, please paste the following parameter at the end of the URL -> &sap-ui-rtl=true"
@@ -489,6 +523,19 @@
 					actions: [sap.m.MessageBox.Action.OK],
 					textDirection: "LTR"
 				});
+			}
+		}));
+
+		oVL.addContent(new sap.m.Text("text5", {
+			text: "\n Simply usage"
+			})
+		);
+
+		oVL.addContent(new sap.m.Button({
+			text: "Simple show",
+			width: "270px",
+			press: function () {
+				sap.m.MessageBox.show("Hello curly { brace");
 			}
 		}));
 

@@ -40,6 +40,7 @@
 
 <!-- Test functions -->
 <script language="javascript">
+	sinon.config.useFakeTimers = false;
 
 	//TODO currently we rely on northwind odata service for tests...
 	//TODO tests depends on server response time and northwind content...so tests may be unstable
@@ -1401,6 +1402,66 @@
 			}
 		});
 	});
+	
+	asyncTest("test metadata loading: sap-value-list",function(){
+		var oModel = initModel(sURI, {skipMetadataAnnotationParsing: true, useBatch : true, metadataUrlParams: {"sap-value-list": "none"}});
+		oModel.oMetadata.loaded().then(function(){
+			ok(oModel.getServiceMetadata(), "metadata loaded");
+			ok(!oModel.getServiceAnnotations(), "annotations not loaded");
+			ok(!oModel.getProperty("/#VL_CH_ANLA/BUKRS/@sap:label"), "Annotation EntityType not yet loaded");
+			ok(oModel.getProperty("/#UpdatableItem/CompanyCode/@sap:label"), "Company Code");
+			oModel.addAnnotationUrl(sURI+"$metadata?sap-value-list=all").then(function(oParams) {
+				equal(oModel.getProperty("/#VL_CH_ANLA/BUKRS/@sap:label"), "Company Code", "Annotation EntityType loaded");
+				ok(oModel.getProperty("/#UpdatableItem/CompanyCode/@sap:label"), "Company Code");
+				ok(oModel.getServiceAnnotations(), "annotations loaded");
+				ok(oParams.entitySets, "array of entitySets returned");
+				ok(oParams.entitySets.length === 1, "1 entitySet added");
+				ok(typeof oParams.entitySets[0] == "object", "entitySet metadata object exists");
+				ok(oParams.entitySets[0].entityType === "ZFAR_CUSTOMER_LINE_ITEMS2_SRV.VL_CH_ANLA", "entityType ok");
+				ok(oParams.entitySets[0].name === "VL_CH_ANLA", "entitySetName ok");
+				start();
+			});
+		});
+	});
+	asyncTest("test metadata loading: sap-value-list",function(){
+		var oModel = initModel(sURI, {skipMetadataAnnotationParsing: true, useBatch : true, metadataUrlParams: {"sap-value-list": "none"}});
+		oModel.oMetadata.loaded().then(function(){
+			ok(oModel.getServiceMetadata(), "metadata loaded");
+			ok(!oModel.getServiceAnnotations(), "annotations not loaded");
+			ok(!oModel.getProperty("/#VL_CH_ANLA/BUKRS/@sap:label"), "Annotation EntityType not yet loaded");
+			ok(oModel.getProperty("/#UpdatableItem/CompanyCode/@sap:label"), "Company Code");
+			oModel.addAnnotationUrl([sURI+"$metadata?sap-value-list=Test", sURI+"$metadata?sap-value-list=Test2"]).then(function(oParams) {
+				equal(oModel.getProperty("/#VL_CH_ANLA/BUKRS/@sap:label"), "Company Code", "Annotation EntityType loaded");
+				ok(oModel.getProperty("/#UpdatableItem/CompanyCode/@sap:label"), "Company Code");
+				ok(oModel.getServiceAnnotations(), "annotations loaded");
+				ok(oParams.entitySets, "array of entitySets returned");
+				ok(oParams.entitySets.length === 2, "2 entitySet added");
+				ok(typeof oParams.entitySets[0] == "object", "entitySet metadata object exists");
+				ok(oParams.entitySets[0].entityType === "ZFAR_CUSTOMER_LINE_ITEMS2_SRV.VL_CH_ANLA", "entityType ok");
+				ok(oParams.entitySets[0].name === "VL_CH_ANLA", "entitySetName ok");
+				ok(typeof oParams.entitySets[1] == "object", "entitySet metadata object exists");
+				ok(oParams.entitySets[1].entityType === "ZFAR_CUSTOMER_LINE_ITEMS2_SRV.VL_CH_ANLA", "entityType ok");
+				ok(oParams.entitySets[1].name === "VL_CH_ANLA", "entitySetName ok");
+				start();
+			});
+		});
+	});
+	
+	asyncTest("test metadata loading (relative metadataUrl): sap-value-list",function(){
+		var oModel = initModel(sURI, {skipMetadataAnnotationParsing: true, useBatch : true, metadataUrlParams: {"sap-value-list": "none"}});
+		oModel.oMetadata.loaded().then(function(){
+			ok(oModel.getServiceMetadata(), "metadata loaded");
+			ok(!oModel.getServiceAnnotations(), "annotations not loaded");
+			ok(!oModel.getProperty("/#VL_CH_ANLA/BUKRS/@sap:label"), "Annotation EntityType not yet loaded");
+			ok(oModel.getProperty("/#UpdatableItem/CompanyCode/@sap:label"), "Company Code");
+			oModel.addAnnotationUrl("$metadata?sap-value-list=all").then(function() {
+				equal(oModel.getProperty("/#VL_CH_ANLA/BUKRS/@sap:label"), "Company Code", "Annotation EntityType loaded");
+				ok(oModel.getProperty("/#UpdatableItem/CompanyCode/@sap:label"), "Company Code");
+				ok(oModel.getServiceAnnotations(), "annotations loaded");
+				start();
+			});
+		});
+	});
 
 	module("Metamodel binding", {
 		setup: function() {
@@ -1412,21 +1473,27 @@
 		}
 	});
 
-	test("Entityset metadata w/o context", function() {
-		equal(this.oModel.getProperty("/Categories(1)/##name"), "Category");
-		equal(this.oModel.getProperty("/Categories(1)/##property/0/name"), "CategoryID");
-		equal(this.oModel.getProperty("/Categories(1)/CategoryID/##type"), "Edm.Int32");
-		equal(this.oModel.getProperty("/Categories(1)/Products(0)/##name"), "Product");
-		equal(this.oModel.getProperty("/Categories(1)/Products(0)/ProductID/##type"), "Edm.Int32");
+	asyncTest("Entityset metadata w/o context", function() {
+		this.oModel.getMetaModel().loaded().then(function() {
+			equal(this.oModel.getProperty("/Categories(1)/##name"), "Category");
+			equal(this.oModel.getProperty("/Categories(1)/##property/0/name"), "CategoryID");
+			equal(this.oModel.getProperty("/Categories(1)/CategoryID/##type"), "Edm.Int32");
+			equal(this.oModel.getProperty("/Categories(1)/Products(0)/##name"), "Product");
+			equal(this.oModel.getProperty("/Categories(1)/Products(0)/ProductID/##type"), "Edm.Int32");
+			start();
+		}.bind(this))
 	});
 
-	test("Entityset metadata w/ context", function() {
-		var oContext = this.oModel.getContext("/Categories(1)")
-		equal(this.oModel.getProperty("##name", oContext), "Category");
-		equal(this.oModel.getProperty("##property/0/name", oContext), "CategoryID");
-		equal(this.oModel.getProperty("CategoryID/##type", oContext), "Edm.Int32");
-		equal(this.oModel.getProperty("Products(0)/##name", oContext), "Product");
-		equal(this.oModel.getProperty("Products(0)/ProductID/##type", oContext), "Edm.Int32");
+	asyncTest("Entityset metadata w/ context", function() {
+		this.oModel.getMetaModel().loaded().then(function() {
+			var oContext = this.oModel.getContext("/Categories(1)")
+			equal(this.oModel.getProperty("##name", oContext), "Category");
+			equal(this.oModel.getProperty("##property/0/name", oContext), "CategoryID");
+			equal(this.oModel.getProperty("CategoryID/##type", oContext), "Edm.Int32");
+			equal(this.oModel.getProperty("Products(0)/##name", oContext), "Product");
+			equal(this.oModel.getProperty("Products(0)/ProductID/##type", oContext), "Edm.Int32");
+			start();
+		}.bind(this))
 	});
 	
 	</script>

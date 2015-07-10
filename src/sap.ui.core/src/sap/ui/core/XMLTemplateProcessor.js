@@ -4,8 +4,8 @@
 
 /*global HTMLTemplateElement, DocumentFragment*/
 
-sap.ui.define(['jquery.sap.global', './mvc/View'],
-	function(jQuery, View) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './mvc/View', './ExtensionPoint'],
+	function(jQuery, ManagedObject, View, ExtensionPoint) {
 	"use strict";
 
 
@@ -14,7 +14,7 @@ sap.ui.define(['jquery.sap.global', './mvc/View'],
 
 		function parseScalarType(sType, sValue, sName, oController) {
 			// check for a binding expression (string)
-			var oBindingInfo = sap.ui.base.ManagedObject.bindingParser(sValue, oController, true);
+			var oBindingInfo = ManagedObject.bindingParser(sValue, oController, true);
 			if ( oBindingInfo && typeof oBindingInfo === "object" ) {
 				return oBindingInfo;
 			}
@@ -31,7 +31,7 @@ sap.ui.define(['jquery.sap.global', './mvc/View'],
 			}
 
 			// Note: to avoid double resolution of binding expressions, we have to escape string values once again
-			return typeof vValue === "string" ? sap.ui.base.ManagedObject.bindingParser.escape(vValue) : vValue;
+			return typeof vValue === "string" ? ManagedObject.bindingParser.escape(vValue) : vValue;
 		}
 
 		function localName(xmlNode) {
@@ -340,7 +340,7 @@ sap.ui.define(['jquery.sap.global', './mvc/View'],
 						mSettings['containingView'] = oView._oContainingView;
 
 					} else if ((sName === "binding" && !oInfo) || sName === 'objectBindings' ) {
-						var oBindingInfo = sap.ui.base.ManagedObject.bindingParser(sValue, oView._oContainingView.oController);
+						var oBindingInfo = ManagedObject.bindingParser(sValue, oView._oContainingView.oController);
 						// TODO reject complex bindings, types, formatters; enable 'parameters'?
 						mSettings.objectBindings = mSettings.objectBindings || {};
 						mSettings.objectBindings[oBindingInfo.model || undefined] = oBindingInfo;
@@ -367,7 +367,7 @@ sap.ui.define(['jquery.sap.global', './mvc/View'],
 						mSettings[sName] = parseScalarType(oInfo.altTypes[0], sValue, sName, oView._oContainingView.oController);
 
 					} else if (oInfo && oInfo._iKind === 2 /* MULTIPLE_AGGREGATION */ ) {
-						var oBindingInfo = sap.ui.base.ManagedObject.bindingParser(sValue, oView._oContainingView.oController);
+						var oBindingInfo = ManagedObject.bindingParser(sValue, oView._oContainingView.oController);
 						if ( oBindingInfo ) {
 							mSettings[sName] = oBindingInfo;
 						} else {
@@ -396,8 +396,15 @@ sap.ui.define(['jquery.sap.global', './mvc/View'],
 						} else {
 							jQuery.sap.log.warning(oView + ": event handler function \"" + sValue + "\" is not a function or does not exist in the controller.");
 						}
-					} else if ( !(oInfo && oInfo._iKind !== -1 /* SPECIAL_SETTING */) && sName !== 'xmlns' ) {
-						jQuery.sap.assert(false, oView + ": encountered unknown setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "')");
+					} else if (oInfo && oInfo._iKind === -1) {
+						// SPECIAL SETTING - currently only allowed for View´s async setting
+						if (sap.ui.core.mvc.View.prototype.isPrototypeOf(oClass.prototype) && sName == "async") {
+							mSettings[sName] = parseScalarType(oInfo.type, sValue, sName, oView._oContainingView.oController);
+						} else {
+							jQuery.sap.log.warning(oView + ": setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "') is not supported");
+						}
+					} else {
+						jQuery.sap.assert(sName === 'xmlns', oView + ": encountered unknown setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "')");
 					}
 				}
 				if (aCustomData.length > 0) {

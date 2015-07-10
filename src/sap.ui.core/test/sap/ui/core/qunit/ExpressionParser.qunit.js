@@ -5,6 +5,7 @@
 	"use strict";
 
 	jQuery.sap.require("sap.ui.base.ExpressionParser");
+	jQuery.sap.require("sap.ui.model.odata.ODataUtils");
 
 	/**
 	 * Checks the string result of an expression binding when bound to a control property of type
@@ -159,9 +160,7 @@
 	//*********************************************************************************************
 	[
 		//parser error
-		{binding: "{='foo' 'bar'}", message: "Unexpected CONSTANT: 'bar'", at: 9},
 		{binding: "{=$invalid}}", message: "Expected '{' instead of 'i'", at: 4},
-		{binding: "{='foo' ${bar}}", message: "Unexpected BINDING: ${bar}", at: 9}
 	].forEach(function(oFixture) {
 		test("Invalid binding: " + oFixture.binding, function () {
 			checkError(function () {
@@ -264,10 +263,7 @@
 			message: "Expected IDENTIFIER but instead saw end of input" },
 		{ binding: "{={true: 'bar'}}", message: "Expected IDENTIFIER but instead saw true",
 			token: "true" },
-		{ binding: "{=odata foo}", message: "Unexpected IDENTIFIER: foo", token: "foo" },
-		{ binding: "{=odata.fillUriTemplate )}", message: "Unexpected )", token: ")" },
 		{ binding: "{=, 'foo'}", message: "Unexpected ,", token: "," },
-		{ binding: "{='foo' , 'bar'}", message: "Unexpected ,", token: "," },
 		{ binding: "{='foo' ! 'bar'}", message: "Unexpected !", token: "!" },
 		{ binding: "{='foo' typeof 'bar'}", message: "Unexpected typeof", token: "typeof" },
 		{ binding: "{=odata.}", message: "Expected IDENTIFIER but instead saw }", token: "}" },
@@ -296,6 +292,24 @@
 
 	//*********************************************************************************************
 	[
+		{binding: "{='foo' 'bar'}", at: 8},
+		{binding: "{='foo' ${bar}}", at: 8},
+		{binding: "{=odata foo}", at: 8},
+		{binding: "{=odata.fillUriTemplate )}", at: 24},
+		{binding: "{='foo' , 'bar'}", at: 8},
+	].forEach(function(oFixture) {
+		test("Error handling: excess tokens: " + oFixture.binding, function () {
+			throws(function () {
+				sap.ui.base.BindingParser.complexParser(oFixture.binding);
+			}, new SyntaxError("Expected '}' and instead saw '"
+					+ oFixture.binding.charAt(oFixture.at) + "' in expression binding "
+					+ oFixture.binding + " at position " + oFixture.at)
+			);
+		});
+	});
+
+	//*********************************************************************************************
+	[
 		{ binding: "{={}}", result: {} },
 		{ binding: "{={'foo': 'bar'}}", result: {foo: "bar"} },
 		{ binding: "{={foo: 'bar'}}", result: {foo: "bar"} },
@@ -317,12 +331,9 @@
 	});
 
 	//*********************************************************************************************
-	checkFixtures("odata functions", [{
+	checkFixtures("odata fillUriTemplate", [{
 		expression: "{=odata.fillUriTemplate('http://foo.com/{p1,p2}', {'p1': 'v1', 'p2': 'v2'})}",
 		result: "http://foo.com/v1,v2"
-	}, {
-		expression: "{=odata.uriEncode('foo', 'Edm.String')}",
-		result: "'foo'"
 	}]);
 
 	//*********************************************************************************************
@@ -411,4 +422,56 @@
 		{ expression: "'PI' in Math", result: "true" },
 		{ expression: "'foo' in {}", result: "false" }
 	]);
+
+	//*********************************************************************************************
+	test("Warning for undefined global identifier", function () {
+		this.mock(jQuery.sap.log).expects("warning")
+			.withExactArgs(
+				"Unsupported global identifier 'foo' in expression parser input '{=42 === foo}'",
+				undefined, "sap.ui.base.ExpressionParser");
+
+		check("{=42 === foo}", "false");
+	});
+
+	//*********************************************************************************************
+	checkFixtures("Global identifiers", [
+		{expression: "{=${/foo} === undefined}", result: "true"},
+		{expression: "{=isNaN(NaN)}", result: "true"},
+		{expression: "{=NaN !== NaN}", result: "true"},
+		{expression: "{=-1/0 === -Infinity}", result: "true"},
+		{expression: "{=isFinite(-Infinity)}", result: "false"},
+		{expression: "{=parseFloat('3.14')}", result: "3.14"},
+		{expression: "{=typeof parseFloat('3.14')}", result: "number"},
+		{expression: "{=parseInt('3.14')}", result: "3"},
+		{expression: "{=typeof parseInt('3.14')}", result: "number"},
+		{expression: "{=Object.keys({'a':'b'})[0]}", result: "a"},
+		{expression: "{=Boolean(0)}", result: "false"},
+		{expression: "{=Boolean(1)}", result: "true"},
+		{expression: "{=isFinite(Number.POSITIVE_INFINITY)}", result: "false"},
+		{expression: "{=Date.UTC(1970, 0, 1)}", result: "0"},
+		{expression: "{=String.fromCharCode(32)}", result: " "},
+		{expression: "{=Array.isArray([])}", result: "true"},
+		{expression: "{=Array.isArray({})}", result: "false"},
+		{expression: "{=JSON.stringify({a:1})}", result: '{"a":1}'},
+	], function (oSandbox) {
+		oSandbox.mock(jQuery.sap.log).expects("warning").never();
+	});
+
+	//*********************************************************************************************
+	test("odata.compare", function () {
+		this.mock(jQuery.sap).expects("require").withExactArgs("sap.ui.model.odata.ODataUtils");
+		this.mock(sap.ui.model.odata.ODataUtils).expects("compare")
+			.withExactArgs(2, 3).returns("-1");
+
+		check("{=odata.compare(2,3)}", "-1");
+	});
+
+	//*********************************************************************************************
+	test("odata.uriEncode", function () {
+		this.mock(jQuery.sap).expects("require").withExactArgs("sap.ui.model.odata.ODataUtils");
+		this.mock(sap.ui.model.odata.ODataUtils).expects("formatValue")
+			.withExactArgs("foo", "Edm.String").returns("'foo'");
+
+		check("{=odata.uriEncode('foo', 'Edm.String')}", "'foo'");
+	});
 } ());

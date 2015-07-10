@@ -10,11 +10,16 @@
 		fullScreenOptimized="true"
 		binding="{/ProductCollection/2}"
 		icon="{ProductPicUrl}"
+		iconAlt="{Name}"
 		intro="{Description}"
 		title="{Name}"
 		titleActive="true"
 		titlePress="handleTitlePress"
-		number="{Price}"
+		number="{
+			parts:[{path:'Price'},{path:'CurrencyCode'}],
+			type: 'sap.ui.model.type.Currency',
+			formatOptions: {showMeasure: false}
+		}"
 		numberUnit="{CurrencyCode}"
 		showMarkers="true"
 		markFlagged="true"

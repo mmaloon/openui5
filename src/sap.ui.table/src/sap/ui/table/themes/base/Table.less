@@ -57,6 +57,10 @@
 	-webkit-box-sizing: border-box;
 }
 
+.sapUiTableVSb {
+	z-index: 2;
+}
+
 
 /*******************************************************************************
  * TABLE SECTIONS
@@ -212,7 +216,7 @@ html[data-sap-ui-browser="ie8"] .sapUiTable {
 
 .sapUiTableColRowHdrIco {
 	height: @sapUiLineHeight;
-	width: @sapUiTableRowHdrWidth;
+	width: 100%;
 	background-repeat: no-repeat;
 	background-position: center center;
 }
@@ -565,7 +569,7 @@ html[dir=rtl] .sapUiTableColRsz {
 }
 
 /* Keep sure that sap.m.Link is vertically aligned inside a table cell */
-.sapUiTableCell .sapUiLnk {
+.sapUiTableCell .sapUiLnk, .sapUiTableColCell .sapUiImg {
 	vertical-align: middle;
 }
 
@@ -626,46 +630,53 @@ html[dir=rtl] .sapUiTableColRsz {
 	cursor: pointer;
 }
 
-.sapUiSizeCompact .sapUiTableGroupIcon {
-	padding-left: 0;
-	margin-left: 0;
-	background-image: none;
-}
+.sapUiSizeCompact, .sapUiSizeCozy {
+	// Hide plus/minus
+	.sapUiTableGroupIcon {
+		padding-left: 0;
+		margin-left: 0;
+		background-image: none;
+	}
 
-.sapUiSizeCompact .sapUiTableGroupIcon::before,
-.sapUiSizeCompact .sapUiTableTreeIcon::before {
-	font-family: "SAP-icons";
-	font-size: 12px;
-	font-weight: normal;
-	display: inline-block;
-	width: @sapUiTableRowHdrWidth;
-	text-align: center;
-	vertical-align: middle;
+	// Show arrow
+	.sapUiTableGroupIcon::before,
+	.sapUiTableTreeIcon::before {
+		font-family: "SAP-icons";
+		font-size: 12px;
+		font-weight: normal;
+		display: inline-block;
+		width: @sapUiTableRowHdrWidth;
+		text-align: center;
+		vertical-align: middle;
+	}
+	
+	// Show arrow
+	.sapUiTableGroupIcon.sapUiTableGroupIconOpen::before,
+	.sapUiTableTreeIconNodeOpen::before {
+		content: '\e1e2';
+	}
+	
+	// Show arrow
+	.sapUiTableGroupIcon.sapUiTableGroupIconClosed::before,
+	.sapUiTableTreeIconNodeClosed::before {
+		content: '\e066';
+	}
+	
+	.sapUiTableRowHdr.sapUiTableGroupHeader > .sapUiTableGroupIcon {
+		left: 0;
+	}
 }
 
 .sapUiTableGroupIcon {
 	line-height: @sapUiTableRowHeight;
 }
 
-.sapUiSizeCompact .sapUiTableGroupIcon.sapUiTableGroupIconOpen::before,
-.sapUiSizeCompact .sapUiTableTreeIconNodeOpen::before {
-	content: '\e1e2';
-}
-
-.sapUiSizeCompact .sapUiTableGroupIcon.sapUiTableGroupIconClosed::before,
-.sapUiSizeCompact .sapUiTableTreeIconNodeClosed::before {
-	content: '\e066';
-}
-
 .sapUiTableRowHdr.sapUiTableGroupHeader {
 	border-right: none;
-}
-
-.sapUiTableRowHdr.sapUiTableGroupHeader {
 	position: relative;
 }
 
-.sapUiTableRowHdr.sapUiTableGroupHeader > div {
+.sapUiTableRowHdr.sapUiTableGroupHeader > .sapUiTableGroupIcon {
 	position: absolute;
 	left: 3px;
 	
@@ -683,10 +694,6 @@ html[dir=rtl] .sapUiTableColRsz {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	min-width: 60px;
-}
-
-.sapUiSizeCompact .sapUiTableRowHdr.sapUiTableGroupHeader > div {
-	left: 0;
 }
 
 .sapUiSizeCompact .sapUiTableTr > td {
@@ -737,4 +744,39 @@ html[data-sap-ui-browser^="ie"] .sapUiTableColHdrCnt {
 
 .sapUiTable > div.sapUiOverlay.sapUiTableOverlay {
 	border: 0; /* Overlay should not have border */
+}
+
+.sapUiTableColCellMenu div {
+	display: inline-block;
+	position: absolute;
+	font-family: 'SAP-icons';
+	font-size: 1.375rem;
+	text-align: center;
+	-moz-transform: translatey(-50%);
+	-ms-transform: translatey(-50%);
+	-webkit-transform: translatey(-50%);
+	transform: translatey(-50%);
+	top:50%;
+}
+
+.sapUiTableColCellMenu .sapUiTableColDropDown {
+	left: 0;
+	width: 2rem;
+	right: 2rem;
+	text-align: center;
+	padding-left: 0.25rem;
+	padding-right: 0.25rem;
+	cursor: default;
+}
+
+ .sapUiTableColDropDown:active {
+ 	color: @sapUiTextInverted;
+ }
+
+.sapUiTableColResizer {
+	right: 0;
+	width: 2rem;
+	padding-left: 0.25rem;
+	padding-right: 0.25rem;
+	cursor: default;
 }

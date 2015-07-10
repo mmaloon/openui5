@@ -105,10 +105,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './InstanceManager', './Toolbar', '
 			verticalScrolling: {type: "boolean", group: "Behavior", defaultValue: true},
 
 			/**
-			 * This property decides whether the dialog is resizeable. If this property is set to true, the dialog will have a resize handler in it's bottom right corner. This property has a default value true.
+			 * This property decides whether the dialog is resizable. If this property is set to true, the dialog will have a resize handler in it's bottom right corner. This property has a default value true.
 			 * @since 1.30
 			 */
-			resizeable: {type: "boolean", group: "Behavior", defaultValue: false},
+			resizable: {type: "boolean", group: "Behavior", defaultValue: false},
 
 			/**
 			 * This property decides whether the dialog is draggable. If this property is set to true, the dialog will be draggable with it's header. This property has a default value true.
@@ -489,6 +489,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './InstanceManager', './Toolbar', '
 			this.fireBeforeClose({origin: this._oCloseTrigger});
 			oPopup.attachClosed(this._handleClosed, this);
 			this._deregisterResizeHandler();
+			this._bDisableRepositioning = false;
 			oPopup.close();
 		}
 		return this;
@@ -521,6 +522,15 @@ sap.ui.define(['jquery.sap.global', './Bar', './InstanceManager', './Toolbar', '
 
 	Dialog.prototype._handleClosed = function() {
 		this.oPopup.detachClosed(this._handleClosed, this);
+
+		// Not removing the content DOM leads to the  problem that control DOM with the same ID exists in two places if
+		// the control is added to a different aggregation without the dialog being destroyed. In this special case the
+		// RichTextEditor (as an example) renders a textarea-element and afterwards tells the TinyMCE component which ID
+		// to use for rendering; since there are two elements with the same ID at that point, it does not work.
+		// As the Dialog can only contain other controls, we can safely discard the DOM - we cannot do this inside
+		// the Popup, since it supports displaying arbitrary HTML content.
+		this.$().remove();
+
 		sap.ui.Device.resize.detachHandler(this._fnOrientationChange);
 		InstanceManager.removeDialogInstance(this);
 		this.fireAfterClose({origin: this._oCloseTrigger});
@@ -658,36 +668,28 @@ sap.ui.define(['jquery.sap.global', './Bar', './InstanceManager', './Toolbar', '
 			iContentOffset = parseInt($this.css('padding-top'), 10) + parseInt($this.css('padding-bottom'), 10),
 			iMaxWidth = iWindowWidth - iHPaddingToScreen,
 			iMaxHeight = iWindowHeight - iVPaddingToScreen - iContentOffset,
-			sContentWidth = this.getContentWidth(),
-			sContentHeight = this.getContentHeight(),
 			oStyles = {};
+
+		//the initial size is set in the renderer when the dom is created
 
 		if (!bStretch) {
 			//set the size to the content
 			if (!this._oManuallySetSize) {
-				oStyles.width = sContentWidth ? sContentWidth : this.$('scroll').width() + 'px';
-				oStyles.height = sContentHeight ? sContentHeight : this.$('scroll').height() + 'px';
+				oStyles.width = this.getContentWidth() ||  undefined;
+				oStyles.height = this.getContentHeight() || undefined;
 			}
 
 			//set max height and width smaller that the screen
 			oStyles["max-width"] = bMessageType ? '480px' : iMaxWidth + 'px';
 			oStyles["max-height"] = iMaxHeight + 'px';
 
-			if (sap.ui.Device.system.tablet || sap.ui.Device.system.desktop) {
-				if (bMessageType) {
-					oStyles.height = undefined;
-				}
-			} else {
-				if (sap.ui.Device.orientation.portrait) {
-					oStyles.width = iMaxWidth + "px";
-				} else {
-					oStyles['min-width'] = iWindowHeight + "px";
-				}
-			}
+			//set the max-height so contents with defined height and width can be displayed with scroller when the height/width is smaller than the content
+			this.$('cont').css({ 'max-height': iMaxHeight + "px" });
 		}
 
 		if ((bStretch && !bMessageType) || (bStretchOnPhone && jQuery.device.is.iphone)) {
 			oStyles.right = oStyles.bottom = oStyles.top = oStyles.left = 0;
+			oStyles.height = oStyles.width = 'auto';
 		}
 
 		$this.css(oStyles);
@@ -715,7 +717,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './InstanceManager', './Toolbar', '
 
 	Dialog.prototype._reposition = function() {
 		if (this._bDisableRepositioning) {
-			//on window resize recalculate the max dimentions, to the resizing is not limited by the old max-width and higth
+			//on window resize recalculate the max dimensions, to the resizing is not limited by the old max-width and height
 			this._setDimensions();
 			return;
 		}
@@ -773,6 +775,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './InstanceManager', './Toolbar', '
 				that._fnOrientationChange();
 			}
 			that._sResizeTimer = null;
+			//reposition only if the resize is not caused by manually resizing the dialog
+			if (!that._oManuallySetSize) {
+				that._reapplyPosition();
+			}
 		}, 0);
 	};
 
@@ -1208,7 +1214,8 @@ sap.ui.define(['jquery.sap.global', './Bar', './InstanceManager', './Toolbar', '
 				} else {
 					this._iconImage = IconPool.createControlByURI({
 						id: this.getId() + "-icon",
-						src: sIcon
+						src: sIcon,
+						useIconTooltip: false
 					}, sap.m.Image).addStyleClass("sapMDialogIcon");
 
 					this._createHeader();
@@ -1461,7 +1468,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './InstanceManager', './Toolbar', '
 		};
 
 		Dialog.prototype.onmousedown = function(e) {
-			if (this.getStretch() || (!this.getDraggable() && !this.getResizeable())) {
+			if (this.getStretch() || (!this.getDraggable() && !this.getResizable())) {
 				return;
 			}
 
@@ -1469,7 +1476,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './InstanceManager', './Toolbar', '
 			var that = this;
 			var $w = jQuery(document);
 			var $target = jQuery(e.target);
-			var bResize = $target.hasClass('sapMDialogResizeHandler') && this.getResizeable();
+			var bResize = $target.hasClass('sapMDialogResizeHandler') && this.getResizable();
 			var fnMouseMoveHandler = function(action) { timeout = timeout ? clearTimeout(timeout) : setTimeout(function() { action(); }, 0); };
 			var initial = {
 				x: e.pageX,

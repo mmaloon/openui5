@@ -12,8 +12,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/**
 	 * Constructor for a new ObjectHeader.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
 	 * ObjectHeader is a display control that enables the user to easily identify a specific object. The object header title is the key identifier of the object and additional text and icons can be used to further distinguish it from other objects.
@@ -42,12 +42,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			number : {type : "string", group : "Misc", defaultValue : null},
 
 			/**
-			 * Object header number units qualifier.
+			 * Object header number units qualifier
 			 */
 			numberUnit : {type : "string", group : "Misc", defaultValue : null},
 
 			/**
-			 * Introductory text for the object header.
+			 * Introductory text for the object header
 			 */
 			intro : {type : "string", group : "Misc", defaultValue : null},
 
@@ -72,6 +72,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			iconActive : {type : "boolean", group : "Misc", defaultValue : null},
 
 			/**
+			 * Object header icon alternative text that is displayed in case the Image is not available, or cannot be displayed.
+			 */
+			iconAlt : {type : "string", group : "Accessibility", defaultValue : null},
+
+			/**
 			 * By default, this is set to true but then one or more requests are sent trying to get the density perfect version of image if this version of image doesn't exist on the server.
 			 *
 			 * If bandwidth is the key for the application, set this value to false.
@@ -79,13 +84,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			iconDensityAware : {type : "boolean", group : "Misc", defaultValue : true},
 
 			/**
-			 * Set the favorite state to true or false. The showMarkers property must be true for this property to take effect.
+			 * Sets the favorite state to true or false. The showMarkers property must be true for this property to take effect.
 			 * @since 1.16.0
 			 */
 			markFavorite : {type : "boolean", group : "Misc", defaultValue : false},
 
 			/**
-			 * Set the flagged state to true or false. The showMarkers property must be true for this property to take effect.
+			 * Sets the flagged state to true or false. The showMarkers property must be true for this property to take effect.
 			 * @since 1.16.0
 			 */
 			markFlagged : {type : "boolean", group : "Misc", defaultValue : false},
@@ -97,7 +102,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			showMarkers : {type : "boolean", group : "Misc", defaultValue : false},
 
 			/**
-			 * When it is true, the selector arrow icon/image is shown and can be pressed.
+			 * When set to true, the selector arrow icon/image is shown and can be pressed.
 			 * @since 1.16.0
 			 */
 			showTitleSelector : {type : "boolean", group : "Misc", defaultValue : false},
@@ -109,6 +114,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			numberState : {type : "sap.ui.core.ValueState", group : "Misc", defaultValue : sap.ui.core.ValueState.None},
 
 			/**
+			 * NOTE: Only applied if you set "responsive=false".
 			 * Displays the condensed object header with title, one attribute, number and number unit.
 			 */
 			condensed : {type : "boolean", group : "Appearance", defaultValue : false},
@@ -214,7 +220,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 			/**
 			 * This aggregation takes only effect when you set "responsive" to true.
-			 * This is an association for the end area of the object header. It can either be filled with an sap.m.IconTabBar or a sap.suite.ui.commons.HeaderContainer control. Overflow handling must be taken care of by the inner control. If used with an IconTabBar control, only the header will be displayed inside the object header, the content will be displayed below the ObjectHeader.
+			 * It can either be filled with an sap.m.IconTabBar or a sap.suite.ui.commons.HeaderContainer control. Overflow handling must be taken care of by the inner control. If used with an IconTabBar control, only the header will be displayed inside the object header, the content will be displayed below the ObjectHeader.
 			 * @since 1.21.1
 			 */
 			headerContainer : {type : "sap.m.ObjectHeaderContainer", multiple : false}
@@ -234,7 +240,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		events : {
 
 			/**
-			 * Event is fired when the title is active and the user tap/click on it
+			 * Event is fired when the title is active and the user taps/clicks on it
 			 */
 			titlePress : {
 				parameters : {
@@ -247,7 +253,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			},
 
 			/**
-			 * Event is fired when the title is active and the user tap/click on it
+			 * Event is fired when the intro is active and the user taps/clicks on it
 			 */
 			introPress : {
 				parameters : {
@@ -260,7 +266,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			},
 
 			/**
-			 * Event is fired when the title icon is active and the user tap/click on it
+			 * Event is fired when the title icon is active and the user taps/clicks on it
 			 */
 			iconPress : {
 				parameters : {
@@ -289,23 +295,27 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	}});
 
 	ObjectHeader.prototype.init = function() {
-		var that = this;
+		var that = this,
+			oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m"); // get resource translation bundle;
 
 		//TODO Remove placeholder when Safari iconFont issue is addressed.
 		this._oPlaceholderIcon = IconPool.createControlByURI({
 			id : this.getId() + "-placeholder",
+			useIconTooltip : false,
 			src : IconPool.getIconURI("fridge")
 		});
 		this._oPlaceholderIcon.addStyleClass("sapMObjStatusMarkerInvisible");
 
 		this._oFlagIcon = IconPool.createControlByURI({
 			id : this.getId() + "-flag",
+			tooltip: oLibraryResourceBundle.getText("TOOLTIP_OH_FLAG_MARK_VALUE"),
 			src : IconPool.getIconURI("flag"),
 			visible : false
 		});
 
 		this._oFavIcon = IconPool.createControlByURI({
 			id : this.getId() + "-favorite",
+			tooltip: oLibraryResourceBundle.getText("TOOLTIP_OH_FAVORITE_MARK_VALUE"),
 			src : IconPool.getIconURI("favorite"),
 			visible : false
 		});
@@ -315,6 +325,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			src: IconPool.getIconURI("arrow-down"),
 			decorative: false,
 			visible : false,
+			useIconTooltip : false,
 			size: "1.375rem",
 			press : function(oEvent) {
 				that.fireTitleSelectorPress({
@@ -381,7 +392,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @returns {sap.m.ObjectHeader} this pointer for chaining
 	 */
 	ObjectHeader.prototype.setNumberState = function (sState) {
-		this.setProperty("numberState", sState,true);
+		this.setProperty("numberState", sState, true);
 		this._getObjectNumber().setState(sState);
 		return this;
 	};
@@ -670,6 +681,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			height : sHeight,
 			width : sWidth,
 			size : sSize,
+			alt: this.getIconAlt(),
+			useIconTooltip : false,
 			densityAware : this.getIconDensityAware()
 		};
 
@@ -679,12 +692,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	ObjectHeader.prototype.onBeforeRendering = function() {
-		// the icontabbar content is rendered internally by the object header
-		// therefore we have to remove it manually before re-rendering
-		if (this.getHeaderContainer() instanceof Control && this.getHeaderContainer().$()) {
-			this.getHeaderContainer().$().remove();
-		}
-
 		if (sap.ui.Device.system.tablet || sap.ui.Device.system.phone) {
 			sap.ui.Device.orientation.detachHandler(this._onOrientationChange, this);
 		}

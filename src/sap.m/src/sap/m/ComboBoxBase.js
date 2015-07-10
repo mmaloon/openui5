@@ -70,7 +70,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './ComboBoxBaseRenderer', './Dialog
 		 * @returns {sap.m.StandardListItem | null}
 		 */
 		ComboBoxBase.prototype.getListItem = function(oItem) {
-			return (oItem && oItem.data(sap.m.ComboBoxBaseRenderer.CSS_CLASS + "ListItem")) || null;
+			return (oItem && oItem._oListItem) || null;
 		};
 
 		/**
@@ -98,8 +98,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './ComboBoxBaseRenderer', './Dialog
 			oListItem.setTitle(oItem.getText());
 			oListItem.setType(oItem.getEnabled() ? sap.m.ListType.Active : sap.m.ListType.Inactive);
 			oListItem.setTooltip(oItem.getTooltip());
-			oItem.data(CSS_CLASS + "ListItem", oListItem);
-
+			oItem._oListItem = oListItem;
 			return oListItem;
 		};
 
@@ -186,6 +185,9 @@ sap.ui.define(['jquery.sap.global', './Bar', './ComboBoxBaseRenderer', './Dialog
 
 			// initialize list
 			this.createList();
+
+			// to prevent the change event from firing when the arrow button is pressed
+			this._bProcessChange = true;
 		};
 
 		/**
@@ -223,8 +225,15 @@ sap.ui.define(['jquery.sap.global', './Bar', './ComboBoxBaseRenderer', './Dialog
 
 			if (this.isOpenArea(oEvent.target)) {
 
+				// change detection for Firefox
+				this._bProcessChange = false;
+
 				// add the active state to the control's field
 				this.addStyleClass(ComboBoxBaseRenderer.CSS_CLASS + "Pressed");
+
+			// change detection for Firefox
+			} else {
+				this._bProcessChange = true;
 			}
 		};
 
@@ -242,6 +251,9 @@ sap.ui.define(['jquery.sap.global', './Bar', './ComboBoxBaseRenderer', './Dialog
 
 			// mark the event for components that needs to know if the event was handled
 			oEvent.setMarked();
+
+			// change detection for Firefox
+			this._bProcessChange = true;
 
 			if ((!this.isOpen() || !this.hasContent()) && this.isOpenArea(oEvent.target)) {
 
@@ -284,6 +296,37 @@ sap.ui.define(['jquery.sap.global', './Bar', './ComboBoxBaseRenderer', './Dialog
 
 				// add the active state to the control's field
 				this.addStyleClass(CSS_CLASS + "Pressed");
+			}
+		};
+
+		/**
+		 * Handle the focus out event.
+		 *
+		 * @param {jQuery.Event} oEvent The event object.
+		 * @private
+		 */
+		ComboBoxBase.prototype.onfocusout = function(oEvent) {
+
+			// note: the focusout event is not yet supported in Firefox (see bug 687787),
+			// although jQuery support the focusout event, it is not reliable.
+			// In some scenarios oEvent.relatedTarget doesn't point to the element receiving focus
+			if (!sap.ui.Device.browser.firefox) {
+				this._bProcessChange = !jQuery.sap.containsOrEquals(this.getDomRef(), oEvent.relatedTarget);
+			}
+
+			InputBase.prototype.onfocusout.apply(this, arguments);
+		};
+
+		/**
+		 * Handles the change event.
+		 *
+		 * @protected
+		 * @param {jQuery.Event} oEvent The event object.
+		 */
+		ComboBoxBase.prototype.onChange = function(oEvent) {
+
+			if (this._bProcessChange) {
+				InputBase.prototype.onChange.apply(this, arguments);
 			}
 		};
 
@@ -652,6 +695,17 @@ sap.ui.define(['jquery.sap.global', './Bar', './ComboBoxBaseRenderer', './Dialog
 		};
 
 		/*
+		 * Handle properties changes of items in the aggregation named <code>items</code>.
+		 * To be overwritten by subclasses.
+		 *
+		 * @protected
+		 * @experimental
+		 * @param {sap.ui.base.Event} oControlEvent
+		 * @since 1.30
+		 */
+		ComboBoxBase.prototype.onItemChange = function() {};
+
+		/*
 		 * Clear the selection.
 		 * To be overwritten by subclasses.
 		 *
@@ -696,6 +750,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './ComboBoxBaseRenderer', './Dialog
 		ComboBoxBase.prototype.addItem = function(oItem) {
 			this.addAggregation("items", oItem);
 
+			if (oItem) {
+				oItem.attachEvent("_change", this.onItemChange, this);
+			}
+
 			if (this.getList()) {
 				this.getList().addItem(this._mapItemToListItem(oItem));
 			}
@@ -716,6 +774,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './ComboBoxBaseRenderer', './Dialog
 		 */
 		ComboBoxBase.prototype.insertItem = function(oItem, iIndex) {
 			this.insertAggregation("items", oItem, iIndex);
+
+			if (oItem) {
+				oItem.attachEvent("_change", this.onItemChange, this);
+			}
 
 			if (this.getList()) {
 				this.getList().insertItem(this._mapItemToListItem(oItem), iIndex);
@@ -831,6 +893,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './ComboBoxBaseRenderer', './Dialog
 			// remove the item from the aggregation items
 			vItem = this.removeAggregation("items", vItem);
 
+			if (vItem) {
+				vItem.detachEvent("_change", this.onItemChange, this);
+			}
+
 			// remove the corresponding mapped item from the List
 			if (this.getList()) {
 				this.getList().removeItem(this.getListItem(vItem));
@@ -852,6 +918,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './ComboBoxBaseRenderer', './Dialog
 
 			// clear the selection
 			this.clearSelection();
+
+			for (var i = 0; i < aItems.length; i++) {
+				aItems[i].detachEvent("_change", this.onItemChange, this);
+			}
 
 			if (this.getList()) {
 				this.getList().removeAllItems();

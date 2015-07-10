@@ -33,6 +33,7 @@
 				suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Popup.qunit.html");
 				suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/SelectionModel.qunit.html");
 				suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Serializer.qunit.html");
+				suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/support/SupportTool.qunit.html");
 				suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/util/Export.qunit.html");
 				suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/util/ExportTypeCSV.qunit.html");
 				if (sap.ui.Device.browser.mobile == false){
@@ -44,7 +45,9 @@
 				suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/ValueStateSupport.qunit.html");
 				suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/ViewSerializer.qunit.html");
 				suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/ws/SapPcpWebSocket.qunit.html");
-			    suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/ws/WebSocket.qunit.html");
+				suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/ws/WebSocket.qunit.html");
+				// Integration test via OPA
+				suite.addTestPage(contextPath + "/test-resources/sap/ui/core/demokit/sample/ViewTemplate/scenario/Opa.qunit.html");
 				return suite;
 			}
 

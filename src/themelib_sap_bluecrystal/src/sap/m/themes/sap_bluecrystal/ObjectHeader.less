@@ -2,11 +2,11 @@
 /* CSS for control sap.m/ObjectHeaderItem.control */
 /* ============================================= */
 
-.sapMOHC.sapMOHBgTransparent{
+.sapMOHC.sapMOHBgTransparent {
 	background-color: transparent;
 }
 
-.sapMOHC.sapMOHBgSolid{
+.sapMOHC.sapMOHBgSolid {
 	background-color: @sapUiLightestBG;
 	border-bottom: 0.063rem @sapUiLightBG;
 }
@@ -20,12 +20,12 @@
 	font-size: @sapMFontMediumSize;
 }
 
-.sapMOHTitle.sapMOHTitleActive > h1 .sapMText{
+.sapMOHTitle.sapMOHTitleActive > h1 .sapMText {
 	color: @sapUiLink;
 	cursor: pointer;
 }
 
-a.sapMOHTitle.sapMOHTitleActive:hover > h1 .sapMText{
+a.sapMOHTitle.sapMOHTitleActive:hover > h1 .sapMText {
 	text-decoration: underline;
 }
 
@@ -44,7 +44,6 @@ a.sapMOHTitle.sapMOHTitleActive:hover > h1 .sapMText{
 }
 
 .sapMOHNumberDiv .sapMObjectNumberUnit {
-	font-size: @sapMFontSmallSize;
 	padding: 0;
 	display: block;
 }
@@ -62,7 +61,7 @@ a.sapMOHTitle.sapMOHTitleActive:hover > h1 .sapMText{
 	color: @sapUiLightText;
 }
 
-.sapMOH .sapMObjectAttributeActive{
+.sapMOH .sapMObjectAttributeActive {
 	color: @sapUiLink;
 }
 
@@ -98,10 +97,15 @@ a.sapMOHTitle.sapMOHTitleActive:hover > h1 .sapMText{
 	background: none;
 }
 
-a.sapMOHTitleActive:focus,
+.sapMOHTitle.sapMOHTitleActive:focus {
+	outline: none;
+}
+
+.sapMOHTitle.sapMOHTitleActive:focus > h1 span,
 .sapMOHTitleIcon > .sapMOHIcon:focus,
 .sapMOHTitleArrow .sapUiIcon:focus {
 	outline: 1px dotted @sapUiFocus;
+	outline-offset: -1px;
 }
 
 .sap-desktop .sapMOHTitleArrow .sapUiIcon:hover {
@@ -123,7 +127,7 @@ html[data-sap-ui-browser ^= "ie"] {
 			padding-left: 0.125rem;
 		}
 
-		a.sapMOHTitleActive:focus {
+		a.sapMOHTitleActive:focus ~ .sapMOHTitle > h1 > span {
 			outline: none;
 			border: 1px dotted @sapUiFocus;
 		}
@@ -131,7 +135,7 @@ html[data-sap-ui-browser ^= "ie"] {
 		.sapMOHIntro {
 			padding: 0.125rem 0.125rem 0.125rem 0.25rem;
 		}
-		
+
 		.sapMObjectAttributeDiv {
 			padding: 0.25rem 0.25rem 0.25rem 0.25rem;
 		}
@@ -224,7 +228,7 @@ html[data-sap-ui-browser ^= "ie"] {
 			padding-top: 0.125rem;
 			padding-left: 0.125rem;
 		}
-		
+
 		.sapMOHRTitleActive .sapMOHRTitleText:focus {
 			outline: none;
 			border: 1px dotted @sapUiFocus;
@@ -245,7 +249,7 @@ html[data-sap-ui-browser ^= "ie"] {
 				margin: 0.125rem;
 			}
 		}
-		
+
 		.sapMOHRStates {
 			padding-left: 0.125rem;
 		}
@@ -253,11 +257,11 @@ html[data-sap-ui-browser ^= "ie"] {
 		.sapMObjStatusMarker .sapUiIcon:focus {
 			outline: none;
 		}
-		
+
 		.sapMObjectAttributeDiv {
 			padding: 0.125rem 0.125rem 0 0.125rem;
 		}
-		
+
 		.sapMOHRStatus {
 			padding: 0.125rem 0.125rem 0.5rem 0.125rem;
 		}
@@ -272,7 +276,6 @@ html[data-sap-ui-browser ^= "ie"] {
 
 .sapMOHR .sapMObjectNumberUnit{
 	font-family: @sapUiFontFamily;
-	font-size: @sapMFontSmallSize;
 	font-weight: normal;
 }
 
@@ -290,15 +293,15 @@ html[data-sap-ui-browser ^= "ie"] {
 	padding-bottom: 0.5rem;
 }
 
-.sapMOHRStatus .sapMObjStatusNone .sapMObjStatusText{
+.sapMOHRStatus .sapMObjStatusNone .sapMObjStatusText {
 	color: @sapUiStandardText;
 }
-.sapMOHRStatus .sapMObjStatusSuccess .sapMObjStatusText{
+.sapMOHRStatus .sapMObjStatusSuccess .sapMObjStatusText {
 	color: @sapUiPositiveText;
 }
-.sapMOHRStatus .sapMObjStatusError .sapMObjStatusText{
+.sapMOHRStatus .sapMObjStatusError .sapMObjStatusText {
 	color: @sapUiNegativeText;
 }
-.sapMOHRStatus .sapMObjStatusWarning .sapMObjStatusText{
+.sapMOHRStatus .sapMObjStatusWarning .sapMObjStatusText {
 	color: @sapUiCriticalText;
 }

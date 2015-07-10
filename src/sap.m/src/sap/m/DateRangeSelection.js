@@ -81,6 +81,7 @@ sap.ui.define(['jquery.sap.global', './DatePicker', './library'],
 	 */
 
 	(function() {
+		/* eslint-disable no-lonely-if */
 
 		DateRangeSelection.prototype.init = function(){
 
@@ -92,18 +93,21 @@ sap.ui.define(['jquery.sap.global', './DatePicker', './library'],
 
 		DateRangeSelection.prototype.onkeypress = function(oEvent){
 
-			if (oEvent.charCode) {
-				var that = this;
-				var oFormatter = _getFormatter(that);
-				var sDelimiter = _getDelimiter(that);
-				var sAllowedCharacters = oFormatter.sAllowedCharacters + sDelimiter + " ";
-				var sChar = String.fromCharCode(oEvent.charCode);
-
-				if (sChar && oFormatter.sAllowedCharacters && sAllowedCharacters.indexOf(sChar) < 0) {
-					oEvent.preventDefault();
-				}
+			// the keypress event should be fired only when a character key is pressed,
+			// unfortunately some browsers fire the keypress event for control keys as well.
+			if (!oEvent.charCode || oEvent.metaKey || oEvent.ctrlKey) {
+				return;
 			}
 
+			var that = this;
+			var oFormatter = _getFormatter(that);
+			var sDelimiter = _getDelimiter(that);
+			var sAllowedCharacters = oFormatter.sAllowedCharacters + sDelimiter + " ";
+			var sChar = String.fromCharCode(oEvent.charCode);
+
+			if (sChar && oFormatter.sAllowedCharacters && sAllowedCharacters.indexOf(sChar) < 0) {
+				oEvent.preventDefault();
+			}
 		};
 
 		DateRangeSelection.prototype._getPlaceholder = function() {
@@ -399,7 +403,7 @@ sap.ui.define(['jquery.sap.global', './DatePicker', './library'],
 					var oStartDate = this.getDateValue();
 					if (oStartDate) {
 						if (!this._oDateRange.getStartDate() || this._oDateRange.getStartDate().getTime() !== oStartDate.getTime()) {
-							this._oDateRange.setStartDate(new Date(oStartDate.getTime()));
+							this._oDateRange.setStartDate(new Date(oStartDate));
 							this._oCalendar.focusDate(oStartDate);
 						}
 					} else {
@@ -411,7 +415,7 @@ sap.ui.define(['jquery.sap.global', './DatePicker', './library'],
 					var oEndDate = this.getSecondDateValue();
 					if (oEndDate) {
 						if (!this._oDateRange.getEndDate() || this._oDateRange.getEndDate().getTime() !== oEndDate.getTime()) {
-							this._oDateRange.setEndDate(new Date(oEndDate.getTime()));
+							this._oDateRange.setEndDate(new Date(oEndDate));
 							this._oCalendar.focusDate(oEndDate);
 						}
 					} else {
@@ -495,7 +499,7 @@ sap.ui.define(['jquery.sap.global', './DatePicker', './library'],
 
 			if (oEndDate) {
 				if (!this._oDateRange.getEndDate() || this._oDateRange.getEndDate().getTime() !== oEndDate.getTime()) {
-					this._oDateRange.setEndDate(new Date(oEndDate.getTime()));
+					this._oDateRange.setEndDate(new Date(oEndDate));
 				}
 			} else {
 				if (this._oDateRange.getEndDate()) {

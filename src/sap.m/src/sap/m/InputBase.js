@@ -211,6 +211,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	InputBase.prototype.init = function() {
 		this._lastValue = "";	// last changed value
 		this._changeProxy = jQuery.proxy(this.onChange, this);
+
+		/**
+		 * To detect when the control is in the rendering phase.
+		 *
+		 * @protected
+		 */
+		this.bRenderingPhase = false;
 	};
 
 	/**
@@ -221,7 +228,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	InputBase.prototype.onBeforeRendering = function() {
 
 		// mark the rendering phase
-		this._bRendering = true;
+		this.bRenderingPhase = true;
 
 		// is DOM already available
 		if (this._bCheckDomValue && this.isActive()) {
@@ -229,6 +236,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			// remember dom value in case of invalidation during keystrokes
 			// so the following should only be used onAfterRendering
 			this._sDomValue = this._getInputValue();
+		} else {
+			// no active dom so we should not try to retain the value
+			this._bCheckDomValue = false;
 		}
 	};
 
@@ -262,7 +272,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		}
 
 		// rendering phase is finished
-		this._bRendering = false;
+		this.bRenderingPhase = false;
 	};
 
 	/**
@@ -386,7 +396,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		// because dom is replaced during the rendering
 		// onfocusout event is triggered probably focus goes to the document
 		// so we ignore this event that comes during the rendering
-		if (this._bRendering) {
+		if (this.bRenderingPhase) {
 			return;
 		}
 
@@ -542,6 +552,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * When the input event is buggy the input event is marked as "invalid".
 	 * - IE10+ fires the input event when an input field with a native placeholder is focused.
 	 * - IE11 fires input event from read-only fields.
+	 * - IE11 fires input event after rendering when value contains an accented character
+	 * - IE11 fires input event whenever placeholder attribute is changed 
 	 *
 	 * @param {jQuery.Event} oEvent The event object.
 	 * @private
@@ -556,6 +568,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 		// ie11 fires input event from read-only fields
 		if (!this.getEditable()) {
+			oEvent.setMarked("invalid");
+			return;
+		}
+		
+		// ie11 fires input event after rendering when value contains an accented character
+		// ie11 fires input event whenever placeholder attribute is changed 
+		if (document.activeElement !== oEvent.target) {
 			oEvent.setMarked("invalid");
 			return;
 		}
@@ -665,7 +684,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			try {
 				oFocusInfo.selectionStart = oFocusDomRef.selectionStart;
 				oFocusInfo.selectionEnd = oFocusDomRef.selectionEnd;
-			} catch (e) {}	// note: chrome fail to read the "selectionStart" property from HTMLInputElement: The input element's type "number" does not support selection.
+			} catch (e) {
+				// note: chrome fail to read the "selectionStart" property from HTMLInputElement: The input element's type "number" does not support selection.
+			}	
 		}
 
 		return oFocusInfo;
@@ -719,9 +740,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	InputBase.prototype.updateDomValue = function(sValue) {
 
-		// dom value updated other than value property
-		this._bCheckDomValue = true;
-
 		// respect to max length
 		sValue = this._getInputValue(sValue);
 
@@ -729,6 +747,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		// otherwise cursor can goto end of text unnecessarily
 		if (this.isActive() && (this._getInputValue() !== sValue)) {
 			this._$input.val(sValue);
+			
+			// dom value updated other than value property
+			this._bCheckDomValue = true;
 		}
 
 		// update synthetic placeholder visibility
@@ -773,10 +794,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	InputBase.prototype.openValueStateMessage = function (){
 		var sState = this.getValueState();
-		var mValueState = sap.ui.core.ValueState;
 
-		if (this.getShowValueStateMessage() && sState && ((sState === mValueState.Warning)
-				|| (sState === mValueState.Error)) && this.getEnabled() && this.getEditable()) {
+		if (this.getShowValueStateMessage() && this.getEnabled() && this.getEditable()) {
 
 			//get value state text
 			var sText = this.getValueStateText();
@@ -805,10 +824,16 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			var sClass = "sapMInputBaseMessage sapMInputBaseMessage" + sState;
 			var sTextClass = "sapMInputBaseMessageText";
 			var oRB = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+			if (sState === sap.ui.core.ValueState.Success) {
+				sClass = "sapUiInvisibleText";
+				sText = "";
+			}
+
 			var $Content = jQuery("<div>", {
 				"id": sMessageId,
 				"class": sClass,
-				"role": "tooltip"
+				"role": "tooltip",
+				"aria-live": "assertive"
 			}).append(
 				jQuery("<span>", {
 					"aria-hidden": true,
@@ -902,6 +927,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			switch (sValueState) {
 				case mValueState.Error:
 				case mValueState.Warning:
+				case mValueState.Success:
 					this.openValueStateMessage();
 					break;
 				default:
@@ -973,7 +999,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @param {string} sName The Property Name
 	 * @param {array} aMessages Array of Messages
 	 */
-	InputBase.prototype.updateMessages = function(sName, aMessages) {
+	InputBase.prototype.propagateMessages = function(sName, aMessages) {
 		if (aMessages && aMessages.length > 0) {
 			this.setValueState(aMessages[0].type);
 			this.setValueStateText(aMessages[0].message);

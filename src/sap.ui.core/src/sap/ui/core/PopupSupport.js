@@ -3,7 +3,7 @@
  */
 
 // Provides class sap.ui.core.PopupSupport
-sap.ui.define([ 'jquery.sap.global', './Element', './Control' ], function(jQuery, Element, Control) {
+sap.ui.define([ 'jquery.sap.global', 'sap/ui/Device', './Element', './Control'], function(jQuery, Device, Element, Control) {
 	"use strict";
 
 	/**
@@ -85,24 +85,19 @@ sap.ui.define([ 'jquery.sap.global', './Element', './Control' ], function(jQuery
 		};
 
 		/**
-		 * Removes the control id to the Popup. If a dedicated Popup id is given
+		 * Removes the child Popup from the parent Popup. If a dedicated Popup id is given
 		 * then the control will be removed accordingly from this Popup. Else
-		 * the closest Popup will be used.
+		 * the closest Popup will be used as parent.
 		 *
 		 * @param {string}
-		 *            [sPopupId] from which Popup the control should be removed
-		 *            (optional)
+		 *        sParentPopupId from which parent Popup the child should be removed
+		 * @param {string}
+		 *        sChildPopupId which child popup should be removed
 		 */
-		this.removeChildFromPopup = function(sPopupId) {
-			if (!sPopupId) {
-				sPopupId = this.getPopupId();
-			}
-
-			// de-register id of Menu-Popup to parent-Popup to make the menu as
-			// focusable
-			var sEventId = "sap.ui.core.Popup.removeFocusableContent-" + sPopupId;
+		this.removeChildFromPopup = function(sParentPopupId, sChildPopupId) {
+			var sEventId = "sap.ui.core.Popup.removeFocusableContent-" + sParentPopupId;
 			sap.ui.getCore().getEventBus().publish("sap.ui", sEventId, {
-				id : this.getId()
+				id : sChildPopupId
 			});
 		};
 
@@ -212,7 +207,7 @@ sap.ui.define([ 'jquery.sap.global', './Element', './Control' ], function(jQuery
 				 * isn't read when the focus happens too fast. Therefore a delay
 				 * is added to JAWS can read the newly focused element.
 				 */
-				var iDelay = sap.ui.Device.browser.msie && sap.ui.Device.browser.version === 9 ? 100 : 0;
+				var iDelay = Device.browser.msie && Device.browser.version === 9 ? 100 : 0;
 
 				jQuery.sap.delayedCall(iDelay, this, function() {
 					// if the element is a control the focus should be called

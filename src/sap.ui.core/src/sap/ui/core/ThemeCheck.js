@@ -2,15 +2,10 @@
  * ${copyright}
  */
 
-/*global URI*/// declare unusual global vars for JSLint/SAPUI5 validation
-
 // Provides class sap.ui.core.ThemeCheck
-sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/Object', 'jquery.sap.script'],
-	function(jQuery, Device, BaseObject/* , jQuerySap */) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/Object', 'sap/ui/thirdparty/URI', 'jquery.sap.script'],
+	function(jQuery, Device, BaseObject, URI/* , jQuerySap */) {
 	"use strict";
-
-
-
 
 
 	sap.ui._maxThemeCheckCycles = 100;
@@ -82,7 +77,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/Object', 'jque
 				jQuery.sap.log.debug("ThemeCheck: Check styles '" + $Style.attr("id") + "': " + res + "/" + res2 + "/" + !!oStyle);
 			}
 			return res || res2;
-		} catch (e) {}
+		} catch (e) {
+			//escape eslint check for empty block
+		}
 
 		if (bLog) {
 			jQuery.sap.log.debug("ThemeCheck: Error during check styles '" + $Style.attr("id") + "': false/false/" + !!oStyle);
@@ -263,8 +260,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device', 'sap/ui/base/Object', 'jque
 	}
 
 
-
-
 	return ThemeCheck;
 
-}, /* bExport= */ true);
+});

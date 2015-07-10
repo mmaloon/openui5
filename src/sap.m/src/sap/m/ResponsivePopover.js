@@ -34,57 +34,57 @@ sap.ui.define(['jquery.sap.global', './Dialog', './Popover', './library', 'sap/u
 		properties : {
 
 			/**
-			 * This property only takes effect when runs on desktop or tablet. Please see the documentation {@linkcode sap.m.Popover#placement here}.
+			 * This property only takes effect when runs on desktop or tablet. Please see the documentation sap.m.Popover#placement.
 			 */
 			placement : {type : "sap.m.PlacementType", group : "Misc", defaultValue : sap.m.PlacementType.Right},
 
 			/**
-			 * This property is supported by both variants. Please see the documentation on {@linkcode sap.m.Popover#showHeader sap.m.Popover} and {@linkcode sap.m.Dialog#showHeader sap.m.Dialog}
+			 * This property is supported by both variants. Please see the documentation on sap.m.Popover#showHeader and sap.m.Dialog#showHeader
 			 */
 			showHeader : {type : "boolean", group : "Misc", defaultValue : true},
 
 			/**
-			 * This property is supported by both variants. Please see the documentation on {@linkcode sap.m.Popover#title sap.m.Popover} and {@linkcode sap.m.Dialog#title sap.m.Dialog}
+			 * This property is supported by both variants. Please see the documentation on sap.m.Popover#title and sap.m.Dialog#title
 			 */
 			title : {type : "string", group : "Misc", defaultValue : null},
 
 			/**
-			 * This property only takes effect when runs on phone. Please see the documentation {@linkcode sap.m.Dialog#icon here}.
+			 * This property only takes effect when runs on phone. Please see the documentation sap.m.Dialog#icon.
 			 */
 			icon : {type : "sap.ui.core.URI", group : "Misc", defaultValue : null},
 
 			/**
-			 * This property only takes effect when runs on desktop or tablet. Please see the documentation {@linkcode sap.m.Popover#modal here}.
+			 * This property only takes effect when runs on desktop or tablet. Please see the documentation sap.m.Popover#modal.
 			 */
 			modal : {type : "boolean", group : "Misc", defaultValue : null},
 
 			/**
-			 * This property only takes effect when runs on desktop or tablet. Please see the documentation {@linkcode sap.m.Popover#offsetX here}.
+			 * This property only takes effect when runs on desktop or tablet. Please see the documentation sap.m.Popover#offsetX.
 			 */
 			offsetX : {type : "int", group : "Misc", defaultValue : null},
 
 			/**
-			 * This property only takes effect when runs on desktop or tablet. Please see the documentation {@linkcode sap.m.Popover#offsetY here}.
+			 * This property only takes effect when runs on desktop or tablet. Please see the documentation sap.m.Popover#offsetY.
 			 */
 			offsetY : {type : "int", group : "Misc", defaultValue : null},
 
 			/**
-			 * This property is supported by both variants. Please see the documentation on {@linkcode sap.m.Popover#contentWidth sap.m.Popover} and {@linkcode sap.m.Dialog#contentWidth sap.m.Dialog}
+			 * This property is supported by both variants. Please see the documentation on sap.m.Popover#contentWidth and sap.m.Dialog#contentWidth
 			 */
 			contentWidth : {type : "sap.ui.core.CSSSize", group : "Misc", defaultValue : null},
 
 			/**
-			 * This property is supported by both variants. Please see the documentation on {@linkcode sap.m.Popover#contentHeight sap.m.Popover} and {@linkcode sap.m.Dialog#contentHeight sap.m.Dialog}
+			 * This property is supported by both variants. Please see the documentation on sap.m.Popover#contentHeight and sap.m.Dialog#contentHeight
 			 */
 			contentHeight : {type : "sap.ui.core.CSSSize", group : "Misc", defaultValue : null},
 
 			/**
-			 * This property is supported by both variants. Please see the documentation on {@linkcode sap.m.Popover#horizontalScrolling sap.m.Popover} and {@linkcode sap.m.Dialog#horizontalScrolling sap.m.Dialog}
+			 * This property is supported by both variants. Please see the documentation on sap.m.Popover#horizontalScrolling and sap.m.Dialog#horizontalScrolling
 			 */
 			horizontalScrolling : {type : "boolean", group : "Misc", defaultValue : null},
 
 			/**
-			 * This property is supported by both variants. Please see the documentation on {@linkcode sap.m.Popover#verticalScrolling sap.m.Popover} and {@linkcode sap.m.Dialog#verticalScrolling sap.m.Dialog}
+			 * This property is supported by both variants. Please see the documentation on sap.m.Popover#verticalScrolling and sap.m.Dialog#verticalScrolling
 			 */
 			verticalScrolling : {type : "boolean", group : "Misc", defaultValue : null},
 
@@ -96,17 +96,17 @@ sap.ui.define(['jquery.sap.global', './Dialog', './Popover', './library', 'sap/u
 		aggregations : {
 
 			/**
-			 * Content is supported by both variants. Please see the documentation on {@linkcode sap.m.Popover#content sap.m.Popover} and {@linkcode sap.m.Dialog#content sap.m.Dialog}
+			 * Content is supported by both variants. Please see the documentation on sap.m.Popover#content and sap.m.Dialog#content
 			 */
 			content : {type : "sap.ui.core.Control", multiple : true, singularName : "content"},
 
 			/**
-			 * CustomHeader is supported by both variants. Please see the documentation on {@linkcode sap.m.Popover#customHeader sap.m.Popover} and {@linkcode sap.m.Dialog#customHeader sap.m.Dialog}
+			 * CustomHeader is supported by both variants. Please see the documentation on sap.m.Popover#customHeader and sap.m.Dialog#customHeader
 			 */
 			customHeader : {type : "sap.m.IBar", multiple : false},
 
 			/**
-			 * SubHeader is supported by both variants. Please see the documentation on {@linkcode sap.m.Popover#subHeader sap.m.Popover} and {@linkcode sap.m.Dialog#subHeader sap.m.Dialog}
+			 * SubHeader is supported by both variants. Please see the documentation on sap.m.Popover#subHeader and sap.m.Dialog#subHeader
 			 */
 			subHeader : {type : "sap.m.IBar", multiple : false},
 
@@ -128,9 +128,14 @@ sap.ui.define(['jquery.sap.global', './Dialog', './Popover', './library', 'sap/u
 		associations : {
 
 			/**
-			 * InitialFocus is supported by both variants. Please see the documentation on {@linkcode sap.m.Popover#initialFocus sap.m.Popover} and {@linkcode sap.m.Dialog#initialFocus sap.m.Dialog}
+			 * InitialFocus is supported by both variants. Please see the documentation on sap.m.Popover#initialFocus and sap.m.Dialog#initialFocus
 			 */
-			initialFocus : {type : "sap.ui.core.Control", multiple : false}
+			initialFocus : {type : "sap.ui.core.Control", multiple : false},
+
+			/**
+			 * Association to controls / ids which describe this control (see WAI-ARIA attribute aria-describedby).
+			 */
+			ariaDescribedBy : {type : "sap.ui.core.Control", multiple : true, singularName : "ariaDescribedBy"}
 		},
 		events : {
 
@@ -240,10 +245,10 @@ sap.ui.define(['jquery.sap.global', './Dialog', './Popover', './library', 'sap/u
 				that.fireAfterOpen({openBy: oEvent.getParameter('openBy')});
 			},
 			beforeClose: function(oEvent){
-				that.fireBeforeClose({openBy: oEvent.getParameter('openBy')});
+				that.fireBeforeClose({openBy: oEvent.getParameter('openBy'), origin: oEvent.getParameter('origin')});
 			},
 			afterClose: function(oEvent){
-				that.fireAfterClose({openBy: oEvent.getParameter('openBy')});
+				that.fireAfterClose({openBy: oEvent.getParameter('openBy'), origin: oEvent.getParameter('origin')});
 			}
 		};
 		if (sap.ui.Device.system.phone) {
@@ -263,15 +268,20 @@ sap.ui.define(['jquery.sap.global', './Dialog', './Popover', './library', 'sap/u
 		this._oDelegate = {
 			onBeforeRendering: function(){
 				var bShowCloseButton = this.getShowCloseButton(),
-					oNavContent, oHeader, oPage, oRealPage;
+					oHeader = this._oControl._getAnyHeader(),
+					oNavContent, oPage, oRealPage;
 
-				if (!bShowCloseButton ||  !sap.ui.Device.system.phone || !this._bContentChanged) {
+				if (!bShowCloseButton ||  !sap.ui.Device.system.phone) {
+					this._removeCloseButton(oHeader);
+					return;
+				}
+
+				if (!this._bContentChanged) {
 					return;
 				}
 
 				this._bContentChanged = false;
 
-				oHeader = this._oControl._getAnyHeader();
 				if (oHeader) {
 					this._insertCloseButton(oHeader);
 				} else {
@@ -383,7 +393,30 @@ sap.ui.define(['jquery.sap.global', './Dialog', './Popover', './library', 'sap/u
 		this.addAggregation("content", oContent);
 	};
 
-	ResponsivePopover.prototype._getSingleNavContent = Popover.prototype._getSingleNavContent;
+	ResponsivePopover.prototype.clone = function(){
+		var oClone = Control.prototype.clone.apply(this, arguments),
+			aContent = this.getAggregation('_popup').getContent();
+
+		for (var i = 0; i < aContent.length; i++) {
+			oClone.addContent(aContent[i].clone());
+		}
+
+		return oClone;
+	};
+
+	ResponsivePopover.prototype._getSingleNavContent = function(){
+		var aContent = this.getContent();
+
+		while (aContent.length === 1 && aContent[0] instanceof sap.ui.core.mvc.View) {
+			aContent = aContent[0].getContent();
+		}
+
+		if (aContent.length === 1 && aContent[0] instanceof sap.m.NavContainer) {
+			return aContent[0];
+		} else {
+			return null;
+		}
+	};
 
 	ResponsivePopover.prototype._getRealPage = function(oPage){
 		var oReturn = oPage, aContent;
@@ -410,6 +443,14 @@ sap.ui.define(['jquery.sap.global', './Dialog', './Popover', './library', 'sap/u
 		if (oHeader) {
 			iIndex = oHeader.getAggregation("contentRight", []).length;
 			oHeader.insertAggregation("contentRight", oCloseButton, iIndex);
+		}
+	};
+
+	ResponsivePopover.prototype._removeCloseButton = function(oHeader) {
+		var oCloseButton = this._getCloseButton();
+
+		if (oHeader) {
+			oHeader.removeAggregation("contentRight", oCloseButton);
 		}
 	};
 
@@ -506,6 +547,19 @@ sap.ui.define(['jquery.sap.global', './Dialog', './Popover', './library', 'sap/u
 	ResponsivePopover.prototype.setEndButton = function(oButton){
 		this._oControl.setEndButton(oButton);
 		return this._setButton("end", oButton);
+	};
+
+	ResponsivePopover.prototype.setShowCloseButton = function(bShowCloseButton) {
+		var oHeader = this._oControl._getAnyHeader();
+		if (bShowCloseButton) {
+			this._insertCloseButton(oHeader);
+		} else {
+			this._removeCloseButton(oHeader);
+		}
+
+		this.setProperty("showCloseButton", bShowCloseButton, true);
+
+		return this;
 	};
 
 	ResponsivePopover.prototype.getBeginButton = function(){

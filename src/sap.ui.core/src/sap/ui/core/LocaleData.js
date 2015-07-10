@@ -34,10 +34,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 
 		_getCalendarData :  function(sKey, sCalendarType) {
 			if (!sCalendarType) {
-				sCalendarType = sap.ui.core.CalendarType.Gregorian;
+				sCalendarType = sap.ui.getCore().getConfiguration().getCalendarType();
 			}
 
-			return this._get(getCLDRCalendarName(sCalendarType))[sKey];
+			return this._get(getCLDRCalendarName(sCalendarType), sKey)[sKey];
 		},
 
 		/**
@@ -84,7 +84,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		 * Get month names in width "narrow", "abbreviated" or "wide"
 		 *
 		 * @param {string} sWidth the required width for the month names
-		 * @param {sap.ui.core.CalendarType} [sCalendarType=sap.ui.core.CalendarType.Gregorian] the type of calendar
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
 		 * @returns {array} array of month names (starting with January)
 		 * @public
 		 */
@@ -97,7 +97,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		 * Get stand alone month names in width "narrow", "abbreviated" or "wide"
 		 *
 		 * @param {string} sWidth the required width for the month names
-		 * @param {sap.ui.core.CalendarType} [sCalendarType=sap.ui.core.CalendarType.Gregorian] the type of calendar
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
 		 * @returns {array} array of month names (starting with January)
 		 * @public
 		 */
@@ -110,7 +110,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		 * Get day names in width "narrow", "abbreviated" or "wide"
 		 *
 		 * @param {string} sWidth the required width for the day names
-		 * @param {sap.ui.core.CalendarType} [sCalendarType=sap.ui.core.CalendarType.Gregorian] the type of calendar
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
 		 * @returns {array} array of day names (starting with Sunday)
 		 * @public
 		 */
@@ -123,7 +123,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		 * Get stand alone day names in width "narrow", "abbreviated" or "wide"
 		 *
 		 * @param {string} sWidth the required width for the day names
-		 * @param {sap.ui.core.CalendarType} [sCalendarType=sap.ui.core.CalendarType.Gregorian] the type of calendar
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
 		 * @returns {array} array of day names (starting with Sunday)
 		 * @public
 		 */
@@ -136,7 +136,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		 * Get quarter names in width "narrow", "abbreviated" or "wide"
 		 *
 		 * @param {string} sWidth the required width for the quarter names
-		 * @param {sap.ui.core.CalendarType} [sCalendarType=sap.ui.core.CalendarType.Gregorian] the type of calendar
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
 		 * @returns {array} array of quarters
 		 * @public
 		 */
@@ -149,7 +149,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		 * Get stand alone quarter names in width "narrow", "abbreviated" or "wide"
 		 *
 		 * @param {string} sWidth the required width for the quarter names
-		 * @param {sap.ui.core.CalendarType} [sCalendarType=sap.ui.core.CalendarType.Gregorian] the type of calendar
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
 		 * @returns {array} array of quarters
 		 * @public
 		 */
@@ -162,7 +162,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		 * Get day periods in width "narrow", "abbreviated" or "wide"
 		 *
 		 * @param {string} sWidth the required width for the day period names
-		 * @param {sap.ui.core.CalendarType} [sCalendarType=sap.ui.core.CalendarType.Gregorian] the type of calendar
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
 		 * @returns {array} array of day periods (AM, PM)
 		 * @public
 		 */
@@ -175,7 +175,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		 * Get date pattern in style "short", "medium", "long" or "full"
 		 *
 		 * @param {string} sStyle the required style for the date pattern
-		 * @param {sap.ui.core.CalendarType} [sCalendarType=sap.ui.core.CalendarType.Gregorian] the type of calendar
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
 		 * @returns {string} the selected date pattern
 		 * @public
 		 */
@@ -188,7 +188,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		 * Get time pattern in style "short", "medium", "long" or "full"
 		 *
 		 * @param {string} sStyle the required style for the date pattern
-		 * @param {sap.ui.core.CalendarType} [sCalendarType=sap.ui.core.CalendarType.Gregorian] the type of calendar
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
 		 * @returns {string} the selected time pattern
 		 * @public
 		 */
@@ -201,7 +201,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		 * Get datetime pattern in style "short", "medium", "long" or "full"
 		 *
 		 * @param {string} sStyle the required style for the datetime pattern
-		 * @param {sap.ui.core.CalendarType} [sCalendarType=sap.ui.core.CalendarType.Gregorian] the type of calendar
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
 		 * @returns {string} the selected datetime pattern
 		 * @public
 		 */
@@ -312,7 +312,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		 * The empty Id ("") might be used to retrieve the interval format fallback. 
 		 *
 		 * @param {string} sId Id of the interval format, e.g. "d-d"
-		 * @param {sap.ui.core.CalendarType} [sCalendarType=sap.ui.core.CalendarType.Gregorian] the type of calendar
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
 		 * @returns {string} interval format string with placeholders {0} and {1}
 		 * @public
 		 * @since 1.17.0 
@@ -374,12 +374,72 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		},
 
 		_getRelative : function(sType, iDiff) {
+			var sPattern;
+
 			if (Math.abs(iDiff) <= 1) {
-				return this._get("dateField-" + sType + "-relative-" + iDiff);
+				sPattern = this._get("dateField-" + sType + "-relative-" + iDiff);
+				if (!sPattern) {
+					if (iDiff === 0) {
+						jQuery.sap.log.warning("sap.ui.core.LocaleData: there's no pattern defined for '" + sType + "' with 0 difference, please adjust the scale.");
+						return null;
+					} else {
+						sPattern = this._get("dateField-" + sType + "-relative-" + (iDiff < 0 ? "past" : "future") + "-one");
+					}
+				}
 			}
-			return this._get("dateField-" + sType + "-relative-" + (iDiff < 0 ? "past" : "future") + "-other");
+
+			if (!sPattern) {
+				sPattern = this._get("dateField-" + sType + "-relative-" + (iDiff < 0 ? "past" : "future") + "-other");
+			}
+
+			return sPattern;
 		},
-		
+
+		/**
+		 * Returns the relative resource pattern with unit 'second' (like now, "in {0} seconds", "{0} seconds ago" under locale 'en') based on the given
+		 * difference value (0 means now, positive value means in the future and negative value means in the past).
+		 *
+		 * @param {int} iDiff the difference in seconds
+		 * @returns {string} the relative resource pattern in unit 'second'
+		 * @public
+		 * @since 1.31.0
+		 */
+		getRelativeSecond : function(iDiff) {
+			return this._getRelative("second", iDiff);
+		},
+
+		/**
+		 * Returns the relative resource pattern with unit 'minute' (like "in {0} minute(s)", "{0} minute(s) ago" under locale 'en') based on the given
+		 * difference value (positive value means in the future and negative value means in the past).
+		 *
+		 * There's no pattern defined for 0 difference and the function returns null if 0 is given. In the 0 difference case, you can use the getRelativeSecond
+		 * function to format the difference using unit 'second'.
+		 *
+		 * @param {int} iDiff the difference in minutes
+		 * @returns {string|null} the relative resource pattern in unit 'minute'. The method returns null if 0 is given as parameter.
+		 * @public
+		 * @since 1.31.0
+		 */
+		getRelativeMinute : function(iDiff) {
+			return this._getRelative("minute", iDiff);
+		},
+
+		/**
+		 * Returns the relative resource pattern with unit 'hour' (like "in {0} hour(s)", "{0} hour(s) ago" under locale 'en') based on the given
+		 * difference value (positive value means in the future and negative value means in the past).
+		 *
+		 * There's no pattern defined for 0 difference and the function returns null if 0 is given. In the 0 difference case, you can use the getRelativeMinute or getRelativeSecond
+		 * function to format the difference using unit 'minute' or 'second'.
+		 *
+		 * @param {int} iDiff the difference in hours
+		 * @returns {string|null} the relative resource pattern in unit 'hour'. The method returns null if 0 is given as parameter.
+		 * @public
+		 * @since 1.31.0
+		 */
+		getRelativeHour : function(iDiff) {
+			return this._getRelative("hour", iDiff);
+		},
+
 		/**
 		 * Returns the relative day resource pattern (like "Today", "Yesterday", "{0} days ago") based on the given
 		 * difference of days (0 means today, 1 means tommorrow, -1 means yesterday, ...).
@@ -392,7 +452,20 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		getRelativeDay : function(iDiff) {
 			return this._getRelative("day", iDiff);
 		},
-		
+
+		/**
+		 * Returns the relative week resource pattern (like "This week", "Last week", "{0} weeks ago") based on the given
+		 * difference of weeks (0 means this week, 1 means next week, -1 means last week, ...).
+		 *
+		 * @param {int} iDiff the difference in weeks
+		 * @returns {string} the relative week resource pattern
+		 * @public
+		 * @since 1.31.0
+		 */
+		getRelativeWeek : function(iDiff) {
+			return this._getRelative("week", iDiff);
+		},
+
 		/**
 		 * Returns the relative month resource pattern (like "This month", "Last month", "{0} months ago") based on the given
 		 * difference of months (0 means this month, 1 means next month, -1 means last month, ...).
@@ -405,7 +478,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 		getRelativeMonth : function(iDiff) {
 			return this._getRelative("month", iDiff);
 		},
-		
+
 		/**
 		 * Returns the relative year resource pattern (like "This year", "Last year", "{0} year ago") based on the given
 		 * difference of years (0 means this year, 1 means next year, -1 means last year, ...).
@@ -455,8 +528,64 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 
 			return sFormat;
 
-		}
+		},
 
+		/**
+		 * Returns the era name.
+		 *
+		 * @param {string} sStyle the style of the era name. It can be 'wide', 'abbreviated' or 'narrow'
+		 * @param {int} [iIndex] the index of the era name in era name set. If this isn't set, the last element in era name set is returned
+		 * @param {sap.ui.core.CalendarType} [sCalendarType] the type of calendar. If it's not set, it falls back to the calendar type either set in configuration or calculated from locale.
+		 * @return {string} the era name
+		 * @public
+		 * @since 1.28.6
+		 */
+		getEra : function(sStyle, iIndex, sCalendarType) {
+			jQuery.sap.assert(sStyle == "wide" || sStyle == "abbreviated" || sStyle == "narrow" , "sStyle must be wide, abbreviate or narrow");
+
+			if (typeof iIndex === "string") {
+				sCalendarType = iIndex;
+				iIndex = undefined;
+			}
+
+			var oEras = this._getCalendarData("era-" + sStyle, sCalendarType),
+				sName, iMax = 0, iName;
+			if (iIndex !== undefined && iIndex !== null) {
+				return oEras["" + iIndex];
+			} else {
+				for (sName in oEras) {
+					iName = parseInt(sName, 10);
+					if (iName > iMax) {
+						iMax = iName;
+					}
+				}
+				return oEras["" + iMax];
+			}
+		},
+
+		/**
+		 * Returns the preferred calendar type for the current locale which exists in {@link sap.ui.core.CalendarType}
+		 *
+		 * returns {sap.ui.core.CalendarType} the preferred calendar type
+		 * @public
+		 * @since 1.28.6
+		 */
+		getPreferredCalendarType: function() {
+			var sCalendarPreference = this._get("calendarPreference"),
+				aCalendars = sCalendarPreference ? sCalendarPreference.split(" ") : [],
+				sCalendarName, sType, i;
+
+			for ( i = 0 ; i < aCalendars.length ; i++ ) {
+				sCalendarName = aCalendars[i];
+				for (sType in sap.ui.core.CalendarType) {
+					if (sCalendarName === getCLDRCalendarName(sType).substring(3).toLowerCase()) {
+						return sType;
+					}
+				}
+			}
+
+			return sap.ui.core.CalendarType.Gregorian;
+		}
 	});
 
 	/**
@@ -503,8 +632,59 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 				"quarters-standAlone-wide":["1st quarter","2nd quarter","3rd quarter","4th quarter"],
 				"dayPeriods-format-narrow":["AM","PM"],
 				"dayPeriods-format-wide":["AM","PM"],
-				"dayPeriods-format-abbreviated":["AM","PM"]
+				"dayPeriods-format-abbreviated":["AM","PM"],
+				"era-wide":"Anno Domini",
+				"era-abbreviated":"AD",
+				"era-narrow":"A"
 			},
+			"dateField-year-displayName":"Year",
+			"dateField-year-relative--1":"last year",
+			"dateField-year-relative-0":"this year",
+			"dateField-year-relative-1":"next year",
+			"dateField-year-relative-future-one":"in {0} year",
+			"dateField-year-relative-future-other":"in {0} years",
+			"dateField-year-relative-past-one":"{0} year ago",
+			"dateField-year-relative-past-other":"{0} years ago",
+			"dateField-month-displayName":"Month",
+			"dateField-month-relative--1":"last month",
+			"dateField-month-relative-0":"this month",
+			"dateField-month-relative-1":"next month",
+			"dateField-month-relative-future-one":"in {0} month",
+			"dateField-month-relative-future-other":"in {0} months",
+			"dateField-month-relative-past-one":"{0} month ago",
+			"dateField-month-relative-past-other":"{0} months ago",
+			"dateField-week-displayName":"Week",
+			"dateField-week-relative--1":"last week",
+			"dateField-week-relative-0":"this week",
+			"dateField-week-relative-1":"next week",
+			"dateField-week-relative-future-one":"in {0} week",
+			"dateField-week-relative-future-other":"in {0} weeks",
+			"dateField-week-relative-past-one":"{0} week ago",
+			"dateField-week-relative-past-other":"{0} weeks ago",
+			"dateField-day-displayName":"Day",
+			"dateField-day-relative--1":"yesterday",
+			"dateField-day-relative-0":"today",
+			"dateField-day-relative-1":"tomorrow",
+			"dateField-day-relative-future-one":"in {0} day",
+			"dateField-day-relative-future-other":"in {0} days",
+			"dateField-day-relative-past-one":"{0} day ago",
+			"dateField-day-relative-past-other":"{0} days ago",
+			"dateField-hour-displayName":"Hour",
+			"dateField-hour-relative-future-one":"in {0} hour",
+			"dateField-hour-relative-future-other":"in {0} hours",
+			"dateField-hour-relative-past-one":"{0} hour ago",
+			"dateField-hour-relative-past-other":"{0} hours ago",
+			"dateField-minute-displayName":"Minute",
+			"dateField-minute-relative-future-one":"in {0} minute",
+			"dateField-minute-relative-future-other":"in {0} minutes",
+			"dateField-minute-relative-past-one":"{0} minute ago",
+			"dateField-minute-relative-past-other":"{0} minutes ago",
+			"dateField-second-displayName":"Second",
+			"dateField-second-relative-0":"now",
+			"dateField-second-relative-future-one":"in {0} second",
+			"dateField-second-relative-future-other":"in {0} seconds",
+			"dateField-second-relative-past-one":"{0} second ago",
+			"dateField-second-relative-past-other":"{0} seconds ago",
 			"decimalFormat": { "standard": "#,##0.###" },
 			"currencyFormat": { "standard": "¤#,##0.00"},
 			"percentFormat": { "standard": "#,##0%"},
@@ -555,23 +735,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 	var mLocaleDatas = {};
 
 	/**
-	 * Mapping bewteen the sap.ui.core.CalendarType and the CLDR calendar name
-	 *
-	 * @private
-	 */
-	var mCLDRCalendarNames = {
-		IslamicCivil: "islamic-civil",
-		IslamicUmalqura: "islamic-umalqura"
-	};
-
-	/**
 	 * Returns the corresponding calendar name in CLDR of the given calendar type
 	 *
 	 * @param {sap.ui.core.CalendarType} sCalendarType the type defined in {@link sap.ui.core.CalendarType}.
 	 * @private
 	 */
 	function getCLDRCalendarName(sCalendarType) {
-		return "ca-" + (mCLDRCalendarNames[sCalendarType] || sCalendarType.toLowerCase());
+		return "ca-" + sCalendarType.toLowerCase();
 	}
 
 	/**
@@ -584,12 +754,58 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 			sRegion = oLocale.getRegion() || "",
 			mData;
 
+		/*
+		 * Merge a CLDR delta file and a CLDR fallback file.
+		 *  
+		 * Note: the contract of this method reg. null values differs from both, 
+		 * jQuery.extend as well as jQuery.sap.extend.
+		 */
+		function merge(obj, fallbackObj) {
+			var name, value, fallbackValue;
+
+			if ( !fallbackObj ) {
+				return;
+			}
+			
+			for ( name in fallbackObj ) {
+
+				if ( fallbackObj.hasOwnProperty(name) ) {
+					
+					value = obj[ name ];
+					fallbackValue = fallbackObj[ name ];
+
+					if ( value === undefined ) {
+						// 'undefined': value doesn't exist in delta, so take it from the fallback object 
+						// Note: undefined is not a valid value in JSON, so we can't misunderstand an existing undefined
+						obj[name] = fallbackValue;
+					} else if ( value === null ) {
+						// 'null' is used by the delta tooling as a marker that a value must not be taken form the fallback
+						delete obj[name];
+					} else if ( typeof value === 'object' && typeof fallbackValue === 'object' ) {
+						// both values are objects, merge them recursively
+						merge(value, fallbackValue);
+					}
+
+				}
+
+			}
+
+		}
+
 		function getOrLoad(sId) {
 			if ( !mLocaleDatas[sId] && (!M_SUPPORTED_LOCALES || M_SUPPORTED_LOCALES[sId] === true) ) {
-				mLocaleDatas[sId] = jQuery.sap.loadResource("sap/ui/core/cldr/" + sId + ".json", {
+				var data = mLocaleDatas[sId] = jQuery.sap.loadResource("sap/ui/core/cldr/" + sId + ".json", {
 					dataType: "json",
 					failOnError : false
 				});
+				
+				// check if the data is a minified delta file. 
+				// If so, load the corresponding fallback data as well, merge it and remove the fallback marker
+				if ( data && data.__fallbackLocale ) {
+					merge(data, getOrLoad(data.__fallbackLocale));
+					delete data.__fallbackLocale;
+				}
+				
 				// if load fails, null is returned 
 				// -> caller will process the fallback chain, in the end a result is identified and stored in mDatas under the originally requested ID
 			}
@@ -637,6 +853,20 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 			this.mCustomData = sap.ui.getCore().getConfiguration().getFormatSettings().getCustomLocaleData();
 		},
 		_get : function(sId) {
+			var sCalendarName, sPropertyName, oRes = {};
+
+			if (arguments.length === 2) {
+				// this.mCustomData doesn't have the calendar type node wrapping the date locale data therefore we need to create the node on the fly
+				//  when this function is called with 2 parameters
+				sCalendarName = sId;
+				sPropertyName = arguments[1];
+
+				if (sCalendarName === getCLDRCalendarName(sap.ui.getCore().getConfiguration().getCalendarType()) && this.mCustomData[sPropertyName]) {
+					// create the node only when the given calendar type is the same as the calendar type set in configuration
+					oRes[sPropertyName] = this.mCustomData[sPropertyName];
+					return oRes;
+				}
+			}
 			return this.mCustomData[sId] || this.mData[sId];
 		}
 	});
@@ -650,4 +880,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Object', './Configuration', './
 
 	return LocaleData;
 
-}, /* bExport= */ true);
+});

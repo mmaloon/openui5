@@ -8,6 +8,7 @@
 <html>
 <head>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>qUnit Page for sap.ui.table.Table</title>
 	<script id="sap-ui-bootstrap" 
 		type="text/javascript"
 		src="../../../../../resources/sap-ui-core.js"
@@ -184,6 +185,17 @@
 	test("SelectedIndex", 1, function() {
 		oTable.setSelectedIndex(8);
 		equals(oTable.getSelectedIndex(), 8, "Selected Index is 8!");
+	});
+
+	test("Check Selection of Last fixedBottomRow", 1, function() {
+		oTable.setFixedBottomRowCount(3);
+		var aRows = oTable.getRows();
+		var oLastRow = aRows[aRows.length - 1];
+		var $LastRow = oLastRow.getDomRefs(true);
+		if ($LastRow.rowSelector) {
+			$LastRow.rowSelector.click()
+			equals(oTable.getSelectedIndex(), 199, "Selected Index is 199");
+		}
 	});
 
 	test("VisibleRowCount", 1, function() {
@@ -391,6 +403,7 @@
 	});
 	
 	test("Resize", function(){
+		oTable._bTouchMode = false;
 		equals(oTable.getVisibleRowCount(), 10, "Row count of 10");
 
 		var barId = oTable.getId() + "-sb";
@@ -398,9 +411,10 @@
 		qutils.triggerMouseEvent(barId, "mousedown", 1, 1, -9950, -10000, 0 );
 		qutils.triggerMouseEvent(barId, "mousemove", 1, 1, -9950, -9500, 0 );
 		qutils.triggerMouseEvent(barId, "mouseup", 1, 1, -9950, -9500, 0 );
+		
 		sap.ui.getCore().applyChanges();
 
-		equals(oTable.getVisibleRowCount(), 16, "Row count of 20");
+		equals(oTable.getVisibleRowCount(), 16, "Row count of 16 expected. Has: " + oTable.getVisibleRowCount());
 	});
 
 	module("Keyboard navigation", {

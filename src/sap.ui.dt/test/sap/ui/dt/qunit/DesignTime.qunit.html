@@ -5,20 +5,12 @@
 		<title>Test Page for sap.ui.dt.DesignTime</title>
 
 		<style>
-			html, body, #qunit-tests {
-				height : 100%;
-			}
-			.sapUiView {
-				height: 100%;	
-			}
-
-			#test-view {
-				border: 1px solid grey;
-				position: fixed;
-				bottom: 0;
-				right: 0;
-				width : 50%;
-				height: 50%;
+			#content {
+				position: absolute;
+				bottom: 0px;
+				z-index: 1000;
+				width: 700px;
+				height: 300px;
 			}
 		</style>
 
@@ -27,7 +19,7 @@
 				type="text/javascript"
 				data-sap-ui-noConflict="true"
 				data-sap-ui-resourceroots='{"dt.view": "testdata/designtime/"}'
-				data-sap-ui-libs="sap.ui.dt,sap.ui.commons,sap.m,sap.ui.layout"
+				data-sap-ui-libs="sap.ui.dt,sap.m,sap.ui.layout"
 				src="../../../../../resources/sap-ui-core.js">
 		</script>
 		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen" />
@@ -36,94 +28,236 @@
 		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 		<script type="text/javascript">
 
-			jQuery.sap.require("sap.ui.dt.adapter");
+			jQuery.sap.require("sap.ui.dt.Overlay");
+			jQuery.sap.require("sap.ui.dt.OverlayRegistry");			
 			jQuery.sap.require("sap.ui.dt.DesignTime");
-			jQuery.sap.require("sap.ui.commons.Button");
 
-			var oView = sap.ui.xmlview("testView", "dt.view.Test");
-			oView.placeAt("test-view");
-
-			var oDesignTime;
-
-			module("Test DesignTime with a view as rootControl", {
-				setup : function() {
-					stop();
-					oDesignTime = new sap.ui.dt.DesignTime({
-						rootControl : oView
-					});
-					oDesignTime.ensureLoadedThen(function() {
-						start();
-					});
+			QUnit.module("Given that an DesignTime is created for a root control", {
+				beforeEach : function() {
+					beforeEachTest.call(this);
 				},
-				teardown : function() {
-						oDesignTime.destroy();
+				afterEach : function() {
+					this.oOuterLayout.destroy();
+					this.oDesignTime.destroy();
 				}
 			});
-			
-			test("Overlay creation", function() {
-				var that = this;
 
-				ok(oDesignTime, "DesignTime Created");
+			QUnit.test("when the DesignTime is initialized ", function(assert) {
+				var aOverlays = this.oDesignTime.getOverlays();
 
-				var aOverlaysIds = ["layout0", "layout1", "layout0-0", "button0", "button1", "button0-0"];
-				jQuery.each(aOverlaysIds, function(i, sOverlayId) {
-					ok(existOverlayFor.call(that, sOverlayId), "Overlay exists for" + sOverlayId);
-				});
+				assert.strictEqual(aOverlays.length, 4, "Overlays for 4 elements created");
 
+				assert.ok(isOverlayForElementInDesignTime(this.oOuterLayout, this.oDesignTime), "overlay for layout exists");
+				assert.ok(isOverlayForElementInDesignTime(this.oInnerLayout, this.oDesignTime), "overlay for inner layout exists");
+				assert.ok(isOverlayForElementInDesignTime(this.oButton1, this.oDesignTime), "overlay for button1 exists");
+				assert.ok(isOverlayForElementInDesignTime(this.oButton2, this.oDesignTime), "overlay for button2 exists");
+
+				assert.strictEqual(this.oDesignTime.getSelection().length, 0, "and selection is empty");
 			});
 
-			test("Set root control", function() {
-				var that = this;
+			QUnit.test("... and new control without overlay is added to a root control aggregation", function(assertasync) {
+				var done = assert.async();
 
-				oLayout = oView.byId("layout0");
-				oDesignTime.setRootControl(oLayout);
-				oDesignTime.ensureLoadedThen(function() {
-					var aOverlaysIds = ["layout0", "layout0-0", "button0", "button0-0"];
-					jQuery.each(aOverlaysIds, function(i, sOverlayId) {
-						ok(existOverlayFor.call(that, sOverlayId), "Overlay exists for" + sOverlayId);
-					});
+				var oButton = new sap.m.Button();
+				var oLayout = new sap.ui.layout.VerticalLayout({content : [oButton]});
 
-					var aNoOverlaysForIds = ["layout1", "button1"];
-					jQuery.each(aNoOverlaysForIds, function(i, sOverlayId) {
-						ok(!existOverlayFor.call(that, sOverlayId), "No overlay exists for" + sOverlayId);
-					});
-				});
+				var aOverlay = [];
+
+				this.oDesignTime.attachEvent("overlayCreated", function(oEvent) {
+
+					aOverlay.push(oEvent.getParameter("overlay"));
+
+					if (aOverlay.length >= 2) {
+						ok(sap.ui.dt.OverlayRegistry.getOverlay(oButton), "overlay for the button exists");
+						ok(sap.ui.dt.OverlayRegistry.getOverlay(oLayout), "overlay for the layout exists");
+
+						done();
+						// cleanup
+						oLayout.destroy();
+					}
+				}, this);
+
+				this.oOuterLayout.addContent(oLayout);
 			});
 
-			module("Test DesignTime with a layout as rootControl", {
-				setup : function() {
-					stop();
-					oLayout = oView.byId("layout0");
-					oDesignTime = new sap.ui.dt.DesignTime({
-						rootControl : oLayout
-					});
-					oDesignTime.ensureLoadedThen(function() {
-						start();
-					});
+			QUnit.test("... and the control is moved inside of root element", function(assert) {
+				var oOldButtonOverlay = isOverlayForElementInDesignTime(this.oButton1, this.oDesignTime);
+				this.oOuterLayout.addContent(this.oButton1);
+				oNewButtonOverlay = isOverlayForElementInDesignTime(this.oButton1, this.oDesignTime);
+				assert.strictEqual(oOldButtonOverlay, oNewButtonOverlay, "overlay for button1 is not changed");
+			});
+
+			QUnit.test("... and the control is removed from root element", function(assert) {
+				this.oInnerLayout.removeContent(this.oButton1);
+
+				assert.strictEqual(isOverlayForElementInDesignTime(this.oButton1, this.oDesignTime), false, "no overlay for button1");
+			});
+
+			QUnit.module("Given that an DesignTime is created for a root control", {
+				beforeEach : function() {
+					beforeEachTest.call(this);
 				},
-				teardown : function() {
-						// this.oDesignTime.destroy();
+				afterEach : function() {
+					this.oOuterLayout.destroy();
 				}
 			});
-			
-			test("Overlay creation", function() {
-				var that = this;
 
-				ok(oDesignTime, "DesignTime Created");
-
-				var aOverlaysIds = ["layout0", "layout0-0", "button0", "button0-0"];
-				jQuery.each(aOverlaysIds, function(i, sOverlayId) {
-					ok(existOverlayFor.call(that, sOverlayId), "Overlay exists for" + sOverlayId);
-				});
-
-				var aNoOverlaysForIds = ["layout1", "button1"];
-				jQuery.each(aNoOverlaysForIds, function(i, sOverlayId) {
-					ok(!existOverlayFor.call(that, sOverlayId), "No overlay exists for" + sOverlayId);
-				});
+			QUnit.test("when the DesignTime is destroyed", function(assert) {
+				this.oDesignTime.destroy();
+				assert.strictEqual(isOverlayForElementInDesignTime(this.oOuterLayout, this.oDesignTime), false, "overlay for layout destroyed");
+				assert.strictEqual(isOverlayForElementInDesignTime(this.oButton1, this.oDesignTime), false, "overlay for button1 destroyed");
+				assert.strictEqual(isOverlayForElementInDesignTime(this.oButton2, this.oDesignTime), false, "overlay for button2 destroyed");
 			});
 
-			var existOverlayFor = function(sId) {
-				return jQuery('.sapUiDtControlOverlay[data-overlay-id=' + oView.sId + '--' + sId + ']').length === 1;	
+			QUnit.test("when the element inside of the DesignTime is destroyed", function(assert) {
+				var done = assert.async();
+
+				this.oDesignTime.attachEventOnce("overlayDestroyed", function(oEvent) {
+						assert.strictEqual(isOverlayForElementInDesignTime(this.oButton1, this.oDesignTime), false, "overlay for button1 destroyed");
+
+						done();
+				}, this);
+
+				this.oButton1.destroy();
+			});
+
+			QUnit.test("when the overlay is selected inside of the DesignTime", function(assert) {
+				var done = assert.async();
+				var oOverlay = sap.ui.dt.OverlayRegistry.getOverlay(this.oButton1);
+
+				this.oDesignTime.attachEventOnce("selectionChange", function(oEvent) {
+					var aSelection = oEvent.getParameter("selection");
+					assert.strictEqual(aSelection.length, 1, "selection is just one overlay");
+					assert.strictEqual(aSelection[0], oOverlay, "selection is correct");
+					done();
+				});
+
+				oOverlay.setSelected(true);
+			});			
+
+			QUnit.module("Given that an DesignTime is created for two root controls", {
+				beforeEach : function() {
+					this.oLayout1 = new sap.ui.layout.VerticalLayout({
+						content : []
+					});
+					this.oLayout2 = new sap.ui.layout.VerticalLayout({
+						content : []
+					});
+					this.oLayout3 = new sap.ui.layout.VerticalLayout({
+						content : []
+					});
+					this.oOuterLayout = new sap.ui.layout.VerticalLayout({
+						content : [this.oLayout1, this.oLayout2, this.oLayout3]
+					});
+					this.oOuterLayout.placeAt("content");
+
+					this.oDesignTime = new sap.ui.dt.DesignTime({
+						rootElements : [this.oLayout1, this.oLayout3]
+					});
+
+					sap.ui.getCore().applyChanges();
+				},
+				afterEach : function() {
+					this.oOuterLayout.destroy();
+					this.oDesignTime.destroy();
+				}
+			});
+
+			QUnit.test("when the DesignTime is initialized", function(assert) {
+				assert.ok(isOverlayForElementInDesignTime(this.oLayout1, this.oDesignTime), "overlay for layout1 exists");
+				assert.strictEqual(isOverlayForElementInDesignTime(this.oLayout2, this.oDesignTime), false, "overlay for layout2 not exists");
+				assert.ok(isOverlayForElementInDesignTime(this.oLayout3, this.oDesignTime), "overlay for layout3 exists");
+			});
+
+			QUnit.test("when the DesignTime is initialized and one root element is removed", function(assert) {
+				this.oDesignTime.removeRootElement(this.oLayout3);
+				assert.ok(isOverlayForElementInDesignTime(this.oLayout1, this.oDesignTime), "overlay for layout1 exists");
+				assert.strictEqual(isOverlayForElementInDesignTime(this.oLayout2, this.oDesignTime), false, "overlay for layout2 doesn't exists");
+				assert.strictEqual(isOverlayForElementInDesignTime(this.oLayout3, this.oDesignTime), false, "overlay for layout3 doesn't exists");
+			});
+
+			QUnit.test("when the DesignTime is initialized and all root elements are removed", function(assert) {
+				this.oDesignTime.removeAllRootElement();
+				assert.strictEqual(isOverlayForElementInDesignTime(this.oLayout1, this.oDesignTime), false, "overlay for layout1 doesn't exists");
+				assert.strictEqual(isOverlayForElementInDesignTime(this.oLayout2, this.oDesignTime), false, "overlay for layout2 doesn't exists");
+				assert.strictEqual(isOverlayForElementInDesignTime(this.oLayout3, this.oDesignTime), false, "overlay for layout3 doesn't exists");
+			});
+
+			QUnit.test("when the DesignTime is initialized and one root element is added", function(assert) {
+				this.oDesignTime.addRootElement(this.oLayout2);
+				assert.ok(isOverlayForElementInDesignTime(this.oLayout1, this.oDesignTime), "overlay for layout1 exists");
+				assert.ok(isOverlayForElementInDesignTime(this.oLayout2, this.oDesignTime), "overlay for layout2 exists");
+				assert.ok(isOverlayForElementInDesignTime(this.oLayout3, this.oDesignTime), "overlay for layout3 exists");
+			});
+
+			QUnit.module("Given that an DesignTime is created", {
+				beforeEach : function(assert) {
+					var that = this;
+					var done = assert.async();
+
+					that.oButton = new sap.m.Button();
+					this.oButton.getMetadata().loadDesignTime().then(function() {
+						that.oDesignTime = new sap.ui.dt.DesignTime({
+							designTimeMetadata : {
+								"sap.m.Button" : {
+									testField : "testValue"
+								}
+							},
+							rootElements : [that.oButton]
+						});
+						
+						done();
+					});
+
+				},
+				afterEach : function() {
+					this.oButton.destroy();
+					this.oDesignTime.destroy();
+				}
+			});
+
+			QUnit.test("when the DesignTime is initialized with a designTimeMetadata", function(assert) {
+				var oDTMetadata = this.oDesignTime.getDesignTimeMetadataFor("sap.m.Button");
+				assert.strictEqual(oDTMetadata.testField, "testValue", "Test field is save in DTMetadata");
+				var oOverlay = sap.ui.dt.OverlayRegistry.getOverlay(this.oButton);
+				assert.strictEqual(oOverlay.getDesignTimeMetadata().getData().testField, "testValue", "DTMetadata from the DT is merged correctly");
+				assert.strictEqual(oOverlay.getDesignTimeMetadata().getName(), "{name}", "UI5 DTMetadata is merged correctly");
+			});
+
+			// TODO test all api methods!
+
+			var beforeEachTest = function() {
+				this.oButton1 = new sap.m.Button();
+				this.oButton2 = new sap.m.Button();
+				this.oInnerLayout = new sap.ui.layout.VerticalLayout({
+					content : [
+						this.oButton1,
+						this.oButton2
+					]
+				});
+				this.oOuterLayout = new sap.ui.layout.VerticalLayout({
+					content : [this.oInnerLayout]
+				});
+				this.oOuterLayout.placeAt("content");
+				sap.ui.getCore().applyChanges();
+				this.oDesignTime = new sap.ui.dt.DesignTime({
+					rootElements : [this.oOuterLayout]
+				});
+				sap.ui.getCore().applyChanges();
+			};		
+
+			var isOverlayForElementInDesignTime = function(oElement, oDesignTime) {
+				var bResult = false;
+
+				var aOverlays = oDesignTime.getOverlays();
+				var aFoundOverlay = jQuery.each(aOverlays, function(iIndex, oOverlay) {
+					if (oOverlay.getElementInstance() === oElement) {
+						bResult = true;
+						return false;
+					}
+				});
+
+				return bResult;
 			};
 
 		</script>
@@ -134,6 +268,6 @@
 	 	<h2 id="qunit-userAgent"></h2>
 		<div id="qunit-testrunner-toolbar"></div>
 		<ol id="qunit-tests"></ol>
-		<div id="test-view"></div>
+		<div id="content"></div>
 	</body>
 </html>

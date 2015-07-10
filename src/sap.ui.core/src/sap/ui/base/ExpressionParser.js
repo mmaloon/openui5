@@ -2,9 +2,8 @@
  * ${copyright}
  */
 
-sap.ui.define(['jquery.sap.global', 'jquery.sap.strings'], function(jQuery/* , jQuerySap1 */) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/thirdparty/URI', 'jquery.sap.strings'], function(jQuery, URI/* , jQuerySap1 */) {
 	"use strict";
-	/*global URI */
 
 	//SAP's Independent Implementation of "Top Down Operator Precedence" by Vaughan R. Pratt,
 	//    see http://portal.acm.org/citation.cfm?id=512931
@@ -20,24 +19,45 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.strings'], function(jQuery/* , j
 	//rbp = "right binding power"
 	var fnUndefined = CONSTANT.bind(null, undefined),
 		mDefaultGlobals = {
-			encodeURIComponent: encodeURIComponent,
-			Math: Math,
-			odata: {
-				fillUriTemplate: function () {
+			"Array": Array,
+			"Boolean": Boolean,
+			"Date": Date,
+			"encodeURIComponent": encodeURIComponent,
+			"Infinity": Infinity,
+			"isFinite": isFinite,
+			"isNaN": isNaN,
+			"JSON": JSON,
+			"Math": Math,
+			"NaN": NaN,
+			"Number": Number,
+			"Object": Object,
+			"odata": {
+				"compare": function () {
+					var ODataUtils;
+
+					jQuery.sap.require("sap.ui.model.odata.ODataUtils");
+					ODataUtils = sap.ui.require("sap/ui/model/odata/ODataUtils");
+					return ODataUtils.compare.apply(ODataUtils, arguments);
+				},
+				"fillUriTemplate": function () {
 					if (!URI.expand) {
 						jQuery.sap.require("sap.ui.thirdparty.URITemplate");
 					}
 					return URI.expand.apply(URI, arguments).toString();
 				},
-				uriEncode: function () {
+				"uriEncode": function () {
 					var ODataUtils;
 
 					jQuery.sap.require("sap.ui.model.odata.ODataUtils");
-					ODataUtils = sap.ui.model.odata.ODataUtils;
+					ODataUtils = sap.ui.require("sap/ui/model/odata/ODataUtils");
 					return ODataUtils.formatValue.apply(ODataUtils, arguments);
 				}
 			},
-			RegExp: RegExp
+			"parseFloat": parseFloat,
+			"parseInt": parseInt,
+			"RegExp": RegExp,
+			"String": String,
+			"undefined": undefined
 		},
 		rDigit = /\d/,
 		rIdentifier = /[a-z]\w*/i,
@@ -52,6 +72,12 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.strings'], function(jQuery/* , j
 			"IDENTIFIER": {
 				led: unexpected,
 				nud: function (oToken, oParser) {
+					if (!(oToken.value in oParser.globals)) {
+						jQuery.sap.log.warning("Unsupported global identifier '" + oToken.value
+								+ "' in expression parser input '" + oParser.input + "'",
+							undefined,
+							"sap.ui.base.ExpressionParser");
+					}
 					return CONSTANT.bind(null, oParser.globals[oToken.value]);
 				}
 			},
@@ -539,7 +565,8 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.strings'], function(jQuery/* , j
 				advance: advance,
 				current: current,
 				expression: expression,
-				globals: mGlobals
+				globals: mGlobals,
+				input: sInput
 			},
 			oToken;
 
@@ -605,8 +632,7 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.strings'], function(jQuery/* , j
 			return fnLeft;
 		}
 
-		//TODO allow short read by passing 0 (do it if iStart is provided below)
-		fnFormatter = expression(-1); // -1 = "greedy read"
+		fnFormatter = expression(0);
 		return {
 			at: current() ? current().start : undefined,
 			formatter: fnFormatter
@@ -627,9 +653,6 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.strings'], function(jQuery/* , j
 		 * If a start index <code>iStart</code> for parsing is provided, the input string is parsed
 		 * starting from this index and the return value contains the index after the last
 		 * character belonging to the expression.
-		 *
-		 * If <code>iStart</code> is undefined the complete string is parsed; in this case
-		 * a <code>SyntaxError</code> is thrown if it does not comply to the expression syntax.
 		 *
 		 * The expression syntax is a subset of JavaScript expression syntax with the
 		 * enhancement that the only "variable" parts in an expression are bindings.
@@ -676,10 +699,9 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.strings'], function(jQuery/* , j
 			oTokens = tokenize(fnResolveBinding, sInput, iStart);
 			oResult = parse(oTokens.tokens, sInput, mGlobals || mDefaultGlobals);
 
-			//TODO TDD replace !iStart by iStart === undefined
-			if (!iStart && oTokens.at < sInput.length) {
-				error("Invalid token in expression", sInput, oTokens.at);
-			}
+//			if (iStart === undefined && oTokens.at < sInput.length) {
+//				error("Invalid token in expression", sInput, oTokens.at);
+//			}
 			if (!oTokens.parts.length) {
 				return {
 					constant: oResult.formatter(),
@@ -688,8 +710,7 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.strings'], function(jQuery/* , j
 			}
 
 			function formatter() {
-				//make separate parameters for parts one (array like) parameter
-				// TODO stringify the result?
+				//turn separate parameters for parts into one (array like) parameter
 				return oResult.formatter(arguments);
 			}
 			formatter.textFragments = true; //use CompositeBinding even if there is only one part
@@ -697,7 +718,6 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.strings'], function(jQuery/* , j
 				result: {
 					formatter: formatter,
 					parts: oTokens.parts
-					//TODO useRawValues: true --> use JS object instead of formatted String
 				},
 				at: oResult.at || oTokens.at
 			};

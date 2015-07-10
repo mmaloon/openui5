@@ -3,11 +3,9 @@
  */
 
 // Provides base class sap.ui.core.Control for all controls
-sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
-	function(jQuery, CustomStyleClassSupport, Element) {
+sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', './UIArea', /* cyclic: './RenderManager', */ './ResizeHandler'],
+	function(jQuery, CustomStyleClassSupport, Element, UIArea, ResizeHandler) {
 	"use strict";
-
-//jQuery.sap.require("sap.ui.core.RenderManager"); // cyclic
 
 	/**
 	 * Creates and initializes a new control with the given <code>sId</code> and settings.
@@ -44,7 +42,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
 		metadata : {
 			stereotype : "control",
 			"abstract" : true,
-			publicMethods: ["placeAt", "attachBrowserEvent", "detachBrowserEvent"],
+			publicMethods: ["placeAt", "attachBrowserEvent", "detachBrowserEvent", "getControlsByFieldGroup"],
 			library: "sap.ui.core",
 			properties : {
 
@@ -61,7 +59,34 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
 				/**
 				 * Whether the control should be visible on the screen. If set to false, a placeholder is rendered instead of the real control
 				 */
-				"visible" : { type: "boolean", group : "Appearance", defaultValue: true }
+				"visible" : { type: "boolean", group : "Appearance", defaultValue: true },
+
+				/**
+				 * The id of a logical field group that this control belongs to. All fields in a logicalfield group should share the same fieldGroupId.
+				 * Once a logical field group is left, the validateFieldGroup event is fired.
+				 *
+				 * @see {sap.ui.core.Control.attachValidateFieldGroup}
+				 * @since 1.31
+				 */
+				"fieldGroupId" : { type: "string", defaultValue: "" }
+
+			},
+			events : {
+				/**
+				 * Event is fired if a logical field group defined by a fieldGroupId of a control was left or the user explicitly pressed a validation key combination.
+				 * Use this event to validate data of the controls belonging to a field group.
+				 * @see {sap.ui.core.Control.setFieldGroupId}
+				 */
+				validateFieldGroup : {
+					enableEventBubbling:true,
+					parameters : {
+
+						/**
+						 * Field group id of the logical field group to validate
+						 */
+						fieldGroupId : {type : "string"}
+					}
+				}
 			}
 		},
 
@@ -187,7 +212,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
 	 * @protected
 	 */
 	Control.prototype.rerender = function() {
-		sap.ui.core.UIArea.rerenderControl(this);
+		UIArea.rerenderControl(this);
 	};
 
 	/**
@@ -550,7 +575,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
 		//Cleanup Busy Indicator
 		this._cleanupBusyIndicator();
 
-		sap.ui.core.ResizeHandler.deregisterAllForControl(this.getId());
+		ResizeHandler.deregisterAllForControl(this.getId());
 
 		Element.prototype.destroy.call(this, bSuppressInvalidate);
 	};
@@ -559,8 +584,11 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
 		var sPreventedEvents = "focusin focusout keydown keypress keyup mousedown touchstart mouseup touchend click",
 			oBusyIndicatorDelegate = {
 				onAfterRendering: function() {
-					if (this.getProperty("busy") === true && this.$()) {
-						fnAppendBusyIndicator.apply(this);
+					if (this.getBusy() && this.$() && !this._busyIndicatorDelayedCallId) {
+						// Also use the BusyIndicatorDelay when a control is initialized with "busy = true"
+						// If the delayed call was already initialized skip any further call if the control was re-rendered while
+						// the delay is on its way.
+						this._busyIndicatorDelayedCallId = jQuery.sap.delayedCall(this.getBusyIndicatorDelay(), this, fnAppendBusyIndicator);
 					}
 				}
 			},
@@ -590,10 +618,19 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
 				}
 
 				//Append busy indicator to control DOM
-				var $BusyIndicator = jQuery('<div class="sapUiLocalBusyIndicator"><div class="sapUiLocalBusyIndicatorAnimation"><div class="sapUiLocalBusyIndicatorBox"></div><div class="sapUiLocalBusyIndicatorBox"></div><div class="sapUiLocalBusyIndicatorBox"></div></div></div>');
-				$BusyIndicator.attr("id",this.getId() + "-busyIndicator");
+				var $BusyIndicator = jQuery('<div class="sapUiLocalBusyIndicator" aria-role="progressbar" aria-valuemin="0" aria-valuemax="100">' +
+					'<div class="sapUiLocalBusyIndicatorAnimation">' +
+						'<div class="sapUiLocalBusyIndicatorBox"></div>' +
+						'<div class="sapUiLocalBusyIndicatorBox"></div>' +
+						'<div class="sapUiLocalBusyIndicatorBox"></div>' +
+					'</div>' +
+				'</div>');
+				var sBusyIndicatorId = this.getId() + "-busyIndicator";
+				$BusyIndicator.attr("id", sBusyIndicatorId);
 				$this.append($BusyIndicator);
 				$this.addClass('sapUiLocalBusy');
+				//Set the actual DOM Element to 'aria-busy'
+				$this.attr('aria-busy', true);
 				if (this._busyDelayedCallId) {
 					jQuery.sap.clearDelayedCall(this._busyDelayedCallId);
 				}
@@ -604,7 +641,12 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
 				var $this = this.$(this._sBusySection);
 
 				if (bBusy) {
-					var $TabRefs = $this.find('[tabindex]'),
+					// all focusable elements must be processed for the "tabindex=-1"
+					// attribute. The dropdownBox for example has got two focusable elements
+					// (arrow and intput field) and both shouldn't be focusable. Otherwise
+					// the input field will still be focused on keypress (tab) because the
+					// browser focuses the element
+					var $TabRefs = $this.find(":sapTabbable"),
 						that = this;
 					this._busyTabIndices = [];
 
@@ -636,7 +678,16 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
 				} else {
 					if (this._busyTabIndices) {
 						jQuery.each(this._busyTabIndices, function(iIndex, oObject) {
-							oObject.ref.attr('tabindex', oObject.tabindex);
+							if (oObject.tabindex) {
+								// if there was no tabindex before it was added by the BusyIndicator
+								// the previous value is "undefined". And this value can't be set
+								// so the attribute remains at the DOM-ref. So if there was no tabindex
+								// attribute before the whole attribute should be removed again.
+								oObject.ref.attr('tabindex', oObject.tabindex);
+							} else {
+								oObject.ref.removeAttr('tabindex');
+							}
+
 							oObject.ref.unbind(sPreventedEvents, fnPreserveEvents);
 						});
 					}
@@ -644,6 +695,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
 				}
 			},
 			fnPreserveEvents = function(oEvent) {
+				jQuery.sap.log.debug("Local Busy Indicator Event Suppressed: " + oEvent.type);
 				oEvent.preventDefault();
 				oEvent.stopImmediatePropagation();
 			},
@@ -713,6 +765,8 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
 				//Remove the busy indicator from the DOM
 				this.$("busyIndicator").remove();
 				this.$().removeClass('sapUiLocalBusy');
+				//Unset the actual DOM Element´s 'aria-busy'
+				this.$().removeAttr('aria-busy');
 
 				//Reset the position style to its original state
 				if (this._busyStoredPosition) {
@@ -782,9 +836,40 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element'],
 				delete this._busyAnimationTimer4;
 			}
 		};
+
+		/**
+		 * Returns a list of all control with a field group id or the controls with the given field group id.
+		 *
+		 * @param {string} sFieldGroupId optional id of the field group
+		 * @return {array} The list of controls with a field group id
+		 * @public
+		 */
+		Control.prototype.getControlsByFieldGroupId = function(sFieldGroupId) {
+			return this.findAggregatedObjects(true, function(oObject) {
+				return oObject instanceof sap.ui.core.Control && 
+						oObject.getFieldGroupId &&
+						((typeof sFieldGroupId !== "string" && oObject.getFieldGroupId()) || (oObject.getFieldGroupId() === sFieldGroupId));
+			});
+		};
+
+		/**
+		 * Triggers the validateFieldGroup event for this control.
+		 * Called by sap.ui.core.UIArea if a field group should be validated after is loses the focus or a validation key combibation was pressed.
+		 * The validation key is defined in the UI area <code>UIArea._oFieldGroupValidationKey</code>
+		 *
+		 * @see {sap.ui.core.Control.attachValidateFieldGroup}
+		 *
+		 * @protected
+		 */
+		Control.prototype.triggerValidateFieldGroup = function() {
+			this.fireValidateFieldGroup({
+				fieldGroupId : this.getFieldGroupId()
+			});
+		};
+
 	})();
 
 
 	return Control;
 
-}, /* bExport= */ true);
+});

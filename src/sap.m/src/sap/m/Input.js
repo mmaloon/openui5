@@ -213,11 +213,6 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 
 	IconPool.insertFontFaceStyle();
 
-	// create an F4 ARIA announcement and remember its ID for later use in the renderer:
-	Input.prototype._sAriaF4LabelId = new sap.ui.core.InvisibleText({
-		text: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("VALUEHELP_ARIA_F4")
-	}).toStatic().getId();
-
 	/**
 	 * The default filter function for one and two-value. It checks whether the item text begins with the typed value.
 	 * @param {string} sValue the current filter string
@@ -288,9 +283,9 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 	 * @private
 	 */
 	Input.prototype.exit = function() {
-		
+
 		this._deregisterEvents();
-		
+
 		// clear delayed calls
 		if (this._iSuggestDelay) {
 			jQuery.sap.clearDelayedCall(this._iSuggestDelay);
@@ -300,7 +295,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			jQuery.sap.clearDelayedCall(this._iRefreshListTimeout);
 			this._iRefreshListTimeout = null;
 		}
-		
+
 		if (this._oSuggestionPopup) {
 			this._oSuggestionPopup.destroy();
 			this._oSuggestionPopup = null;
@@ -395,7 +390,9 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			var sURI = IconPool.getIconURI("value-help");
 			this._oValueHelpIcon = IconPool.createControlByURI({
 				id: this.getId() + "__vhi",
-				src: sURI
+				src: sURI,
+				useIconTooltip: false,
+				noTabStop: true
 			});
 
 			this._oValueHelpIcon.addStyleClass("sapMInputValHelpInner");
@@ -487,6 +484,34 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		jQuery.sap.assert(typeof (fnFilter) === "function", "Input.setRowResultFunction: first argument fnFilter must be a function on " + this);
 		this._fnRowResultFilter = fnFilter;
 		return this;
+	};
+
+	Input.prototype.setShowValueHelp = function(bShowValueHelp) {
+
+		this.setProperty("showValueHelp", bShowValueHelp);
+
+		if (bShowValueHelp && !Input.prototype._sAriaValueHelpLabelId) {
+			// create an F4 ARIA announcement and remember its ID for later use in the renderer:
+			Input.prototype._sAriaValueHelpLabelId = new sap.ui.core.InvisibleText({
+				text: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("INPUT_VALUEHELP")
+			}).toStatic().getId();
+		}
+		return this;
+
+	};
+
+	Input.prototype.setValueHelpOnly = function(bValueHelpOnly) {
+
+		this.setProperty("valueHelpOnly", bValueHelpOnly);
+
+		if (bValueHelpOnly && !Input.prototype._sAriaInputDisabledLabelId) {
+			// create an F4 ARIA announcement and remember its ID for later use in the renderer:
+			Input.prototype._sAriaInputDisabledLabelId = new sap.ui.core.InvisibleText({
+				text: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("INPUT_DISABLED")
+			}).toStatic().getId();
+		}
+		return this;
+
 	};
 
 	/**
@@ -624,10 +649,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			// if no further visible item can be found -> do nothing (e.g. set the old item as selected again)
 			if (iOldIndex >= 0) {
 				aListItems[iOldIndex].setSelected(true);
+				this.$("inner").attr("aria-activedescendant", aListItems[iOldIndex].getId());
 			}
 			return;
 		} else {
 			aListItems[iSelectedIndex].setSelected(true);
+			this.$("inner").attr("aria-activedescendant", aListItems[iSelectedIndex].getId());
 		}
 
 		if (sap.ui.Device.system.desktop) {
@@ -696,7 +723,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			// mark the event as already handled
 			oEvent.originalEvent._sapui_handledByControl = true;
 			this._iPopupListSelectedIndex = -1;
-			this._oSuggestionPopup.close();
+			this._closeSuggestionPopup();
 
 			// if popup is open, simply returns from here to prevent from setting the input to the last known value.
 			return;
@@ -725,7 +752,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 
 				this._iPopupListSelectedIndex = -1;
 			}
-			this._oSuggestionPopup.close();
+			this._closeSuggestionPopup();
 		}
 	};
 
@@ -809,12 +836,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			if (this._oList instanceof Table) {
 				// CSN# 1421140/2014: hide the table for empty/initial results to not show the table columns
 				this._oList.addStyleClass("sapMInputSuggestionTableHidden");
-			} else {
+			} else if (this._oList && this._oList.destroyItems) {
 				this._oList.destroyItems();
 			}
 		} else if (this._oSuggestionPopup && this._oSuggestionPopup.isOpen()) {
 			this._iPopupListSelectedIndex = -1;
-			this._oSuggestionPopup.close();
+			this._closeSuggestionPopup();
 		}
 	};
 
@@ -855,7 +882,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 					if (that.getShowTableSuggestionValueHelp()) {
 						that.fireValueHelpRequest({fromSuggestions: true});
 						that._iPopupListSelectedIndex = -1;
-						that._oSuggestionPopup.close();
+						that._closeSuggestionPopup();
 					}
 				}
 			}));
@@ -1041,6 +1068,17 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			}
 		};
 
+		Input.prototype._closeSuggestionPopup = function() {
+
+			if (this._oSuggestionPopup) {
+				this._oSuggestionPopup.close();
+				this.$("SuggDescr").text(""); // initialize suggestion ARIA text
+				this.$("inner").removeAttr("aria-haspopup");
+				this.$("inner").removeAttr("aria-activedescendant");
+			}
+
+		};
+
 		function createSuggestionPopup(oInput) {
 			var oMessageBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
@@ -1071,6 +1109,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 
 			oInput._oSuggestionPopup = !oInput._bUseDialog ?
 				(new Popover(oInput.getId() + "-popup", {
+					showArrow: false,
 					showHeader : false,
 					placement : sap.m.PlacementType.Vertical,
 					initialFocus : oInput
@@ -1091,7 +1130,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 							+ "-popup-closeButton", {
 						text : oMessageBundle.getText("MSGBOX_CLOSE"),
 						press : function() {
-							oInput._oSuggestionPopup.close();
+							oInput._closeSuggestionPopup();
 						}
 					}),
 					stretch : oInput._bFullScreen,
@@ -1112,25 +1151,23 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 								._getInputValue(oInput._oPopupInput
 										.getValue()));
 						oInput._changeProxy();
-						
+
 						if (oInput instanceof sap.m.MultiInput ) {
 							oInput._validateCurrentText();
 						}
-						
+
 				}).attachAfterClose(function() {
-					
+
 					if (oInput instanceof sap.m.MultiInput && oInput.getEnableMultiLineMode()) {
-						
+
 						oInput._updateTokenizerInMultiInput();
 						oInput._tokenizerInPopup.destroy();
-						oInput._showIndicator();
 						setTimeout(function() {
 							oInput._setContainerSizes();
 						}, 0);
-						
-						
+
 					}
-					
+
 					// only destroy items in simple suggestion mode
 					if (oInput._oList) {
 						if (Table && !(oInput._oList instanceof Table)) {
@@ -1140,12 +1177,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 						}
 					}
 
-					
+
 				}).attachAfterOpen(function() {
 					var sValue = oInput.getValue();
 
 					oInput._oPopupInput.setValue(sValue);
-					oInput.fireSuggest({suggestValue : sValue});
+					oInput._triggerSuggest(sValue);
 					refreshListItems(oInput);
 				}));
 
@@ -1211,8 +1248,8 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 						}
 						oInput._iPopupListSelectedIndex = -1;
 						if (!(oInput._bUseDialog && oInput instanceof sap.m.MultiInput && oInput.getEnableMultiLineMode())) {
-							oInput._oSuggestionPopup.close();
-						}						
+							oInput._closeSuggestionPopup();
+						}
 						if (!sap.ui.Device.support.touch) {
 							oInput._doSelect();
 						}
@@ -1275,16 +1312,6 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 		}
 
 		function overwritePopover(oPopover, oInput) {
-			// overwrite the internal properties to not to show the arrow in popover.
-			oPopover._marginTop = 0;
-			oPopover._marginLeft = 0;
-			oPopover._marginRight = 0;
-			oPopover._marginBottom = 0;
-			oPopover._arrowOffset = 0;
-			oPopover._offsets = [ "0 0", "0 0", "0 0", "0 0" ];
-			oPopover._myPositions = [ "begin bottom", "begin center", "begin top", "end center" ];
-			oPopover._atPositions = [ "begin top", "end center", "begin bottom", "begin center" ];
-
 			oPopover.open = function() {
 				this.openBy(oInput, false, true);
 			};
@@ -1345,6 +1372,9 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 						oInput._oList.addStyleClass("sapMInputSuggestionTableHidden");
 					}
 				}
+				oInput.$("SuggDescr").text(""); // clear suggestion text
+				oInput.$("inner").removeAttr("aria-haspopup");
+				oInput.$("inner").removeAttr("aria-activedescendant");
 				return false;
 			} else {
 				bFilter = oInput.getFilterSuggests();
@@ -1389,8 +1419,16 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 			}
 
 			iItemsLength = aHitItems.length;
+			var sAriaText = "";
 			if (iItemsLength > 0) {
 				// add items to list
+				if (iItemsLength == 1) {
+					sAriaText = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("INPUT_SUGGESTIONS_ONE_HIT");
+				} else {
+					sAriaText = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("INPUT_SUGGESTIONS_MORE_HITS", iItemsLength);
+				}
+				this.$("inner").attr("aria-haspopup", "true");
+
 				if (!oInput._hasTabularSuggestions()) {
 					for (i = 0; i < iItemsLength; i++) {
 						oList.addItem(aHitItems[i]);
@@ -1412,6 +1450,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 					}
 				}
 			} else {
+				sAriaText = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("INPUT_SUGGESTIONS_NO_HIT");
+				oInput.$("inner").removeAttr("aria-haspopup");
+				oInput.$("inner").removeAttr("aria-activedescendant");
+
 				if (!oInput._bUseDialog) {
 					if (oPopup.isOpen()) {
 						oInput._sCloseTimer = setTimeout(function() {
@@ -1426,6 +1468,9 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 					}
 				}
 			}
+
+			// update Accessibility text for suggestion
+			oInput.$("SuggDescr").text(sAriaText);
 		}
 	})();
 
@@ -1445,7 +1490,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 	 * @private
 	 */
 	Input.prototype.onsapshow = function (oEvent) {
-		if (!this.getEnabled() || !this.getShowValueHelp()) {
+		if (!this.getEnabled() || !this.getEditable() || !this.getShowValueHelp()) {
 			return;
 		}
 
@@ -1511,9 +1556,9 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './List'
 						that._changeProxy();
 					}
 					that._iPopupListSelectedIndex = -1;
-					
+
 					if (!(oInput._bUseDialog && oInput instanceof sap.m.MultiInput && oInput.getEnableMultiLineMode())) {
-						oInput._oSuggestionPopup.close();
+						oInput._closeSuggestionPopup();
 					}
 
 					if (!sap.ui.Device.support.touch) {

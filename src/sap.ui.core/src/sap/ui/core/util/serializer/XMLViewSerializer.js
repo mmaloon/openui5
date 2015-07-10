@@ -2,14 +2,10 @@
  * ${copyright}
  */
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './delegate/XML', 'sap/ui/thirdparty/vkbeautify'],
-	function(jQuery, EventProvider, XML, vkbeautify1) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './Serializer', './delegate/XML', 'sap/ui/thirdparty/vkbeautify'],
+	function(jQuery, EventProvider, Serializer, XML, vkbeautify) {
 	"use strict";
 
-
-	
-	/*global vkbeautify *///declare unusual global vars for JSLint/SAPUI5 validation
-	
 	/**
 	 * XML view serializer class. Serializes a given view.
 	 *
@@ -66,7 +62,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './delegate/XML
 		};
 		
 		// create serializer
-		var oControlSerializer = new sap.ui.core.util.serializer.Serializer(
+		var oControlSerializer = new Serializer(
 			this._oView,
 			new XML(
 				this._sDefaultNamespace,
@@ -109,4 +105,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './delegate/XML
 
 	return XMLViewSerializer;
 
-}, /* bExport= */ true);
+});

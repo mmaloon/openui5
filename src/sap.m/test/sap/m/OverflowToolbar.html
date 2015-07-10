@@ -51,13 +51,16 @@
 			text : "Record"
 		}),
 		new sap.m.Button({
-			text : "Play"
+			text : "Play",
+			type : sap.m.ButtonType.Accept
 		}),
 		new sap.m.Button({
-			text : "Pause"
+			text : "Pause",
+			type : sap.m.ButtonType.Emphasized
 		}),
 		new sap.m.Button({
-			text : "Stop"
+			text : "Stop",
+			type : sap.m.ButtonType.Reject
 		}),
 		new sap.m.Button({
 			text : "Forward"
@@ -168,7 +171,7 @@
 	var toolbarContent4 = [
 
 		new sap.m.Label({
-			text : "Nothing on this toolbar can overflow"
+			text : "The ComboBox control can overflow"
 		}),
 		new sap.m.ToolbarSpacer(),
 		new sap.m.ComboBox({
@@ -271,7 +274,12 @@
 					text : "Left Button"
 				}),
 				new sap.m.Button({
-					text : "Middle Button"
+					icon: sNotesIconURI,
+					tooltip: "Notes"
+				}),
+				new sap.m.Button({
+					text : "Disabled Button",
+					enabled: false
 				}),
 				new sap.m.Button({
 					text : "Right Button"

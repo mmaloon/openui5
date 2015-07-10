@@ -202,6 +202,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		jQuery.sap.log.debug("sap.m.BusyDialog.open called at " + new Date().getTime());
 		
 		var oPopup = this._oPopup;
+
+		if (!oPopup) {
+			jQuery.sap.log.warning("Method 'open' is called after sap.m.BusyDialog with id '" + this.getId() + "' is destroyed");
+			return this;
+		}
+
 		if (oPopup.isOpen()) {
 			return this;
 		}
@@ -209,6 +215,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		oPopup.setContent(this);
 		oPopup.attachOpened(this._handleOpened, this);
 		oPopup.setPosition("center center", "center center", document, "0 0", "fit");
+		oPopup.setInitialFocusId(this.getShowCancelButton() ? this._oButton.getId() : this.getId());
 	
 		this._bOpenRequested = true;
 		this._openNowIfPossibleAndRequested();
@@ -242,7 +249,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	BusyDialog.prototype.close = function(bFromCancelButton){
 		this._bOpenRequested = false;
 		var oPopup = this._oPopup;
-	
+
+		if (!oPopup) {
+			jQuery.sap.log.warning("Method 'close' is called after sap.m.BusyDialog with id '" + this.getId() + "' is destroyed");
+			return this;
+		}
+
 		var eOpenState = this._oPopup.getOpenState();
 		if (!(eOpenState === sap.ui.core.OpenState.CLOSED || eOpenState === sap.ui.core.OpenState.CLOSING)) {
 			oPopup.attachClosed(this._handleClosed, this);
@@ -342,12 +354,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 	
 	BusyDialog.prototype._reposition = function() {
+		if (!this._oPopup) {
+			return;
+		}
 		var ePopupState = this._oPopup.getOpenState();
 		if (!(ePopupState === sap.ui.core.OpenState.OPEN)) {
 			return;
 		}
 		this._oPopup._applyPosition(this._oPopup._oLastPosition);
-		
 	};
 	
 	BusyDialog.prototype._handleOpened = function(){

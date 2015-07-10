@@ -158,6 +158,16 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 			this.scrollToItem(oItem);
 		}
 
+		Select.prototype._handleFocusout = function() {
+
+			if (this._bRenderingPhase) {
+				this._bFocusoutDueRendering = true;
+			} else {
+				this._bFocusoutDueRendering = false;
+				this._checkSelectionChange();
+			}
+		};
+
 		Select.prototype._checkSelectionChange = function() {
 			var oItem = this.getSelectedItem();
 
@@ -332,6 +342,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 */
 		Select.prototype.updateItems = function(sReason) {
 			SelectList.prototype.updateItems.apply(this, arguments);
+
+			// note: after the items are recreated, the selected item association
+			// points to the new item
+			this._oSelectionOnFocus = this.getSelectedItem();
 		};
 
 		/**
@@ -483,6 +497,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 
 			// initialize Popover
 			var oPicker = new Popover({
+				showArrow: false,
 				showHeader: false,
 				placement: sap.m.PlacementType.Vertical,
 				offsetX: 0,
@@ -504,44 +519,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		Select.prototype._decoratePopover = function(oPopover) {
 			var that = this;
 
-			// adding additional capabilities to the Popover
-			oPopover._removeArrow = function() {
-				this._marginTop = 0;
-				this._marginLeft = 0;
-				this._marginRight = 0;
-				this._marginBottom = 0;
-				this._arrowOffset = 0;
-				this._offsets = ["0 0", "0 0", "0 0", "0 0"];
-			};
-
-			oPopover._setPosition = function() {
-				this._myPositions = ["begin bottom", "begin center", "begin top", "end center"];
-				this._atPositions = ["begin top", "end center", "begin bottom", "begin center"];
-			};
-
 			oPopover._setMinWidth = function(sWidth) {
-				this.getDomRef().style.minWidth = sWidth;
-			};
+				var oPickerDomRef = this.getDomRef();
 
-			oPopover._setWidth = function(sWidth) {
-				var bAutoAdjustWidth = that.getAutoAdjustWidth(),
-					bIconOnly = that.getType() === "IconOnly",
-					oPickerDomRef = this.getDomRef();
-
-				// set the width of the content
-				if (sap.ui.Device.system.desktop || sap.ui.Device.system.tablet) {
-
-					if (bAutoAdjustWidth) {
-						oPickerDomRef.style.width = "auto";
-						oPickerDomRef.style.minWidth = sWidth;
-					} else {
-						oPickerDomRef.style.width = sWidth;
-					}
-				}
-
-				if (!bIconOnly) {
-
-					// set the width of the popover
+				if (oPickerDomRef) {
 					oPickerDomRef.style.minWidth = sWidth;
 				}
 			};
@@ -560,18 +541,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 			var oPopover = this.getPicker(),
 				sWidth = (this.$().outerWidth() / parseFloat(sap.m.BaseFontSize)) + "rem";
 
-			// remove the Popover arrow
-			oPopover._removeArrow();
-
-			// position adaptations
-			oPopover._setPosition();
-
-			// width adaptations
-			if (sap.ui.Device.system.phone) {
-				oPopover._setMinWidth("100%");
-			} else {
-				oPopover._setWidth(sWidth);
-			}
+			oPopover._setMinWidth(sWidth);
 		};
 
 		/* ----------------------------------------------------------- */
@@ -611,10 +581,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @private
 		 */
 		Select.prototype._onBeforeOpenDialog = function() {
-			var oHeader = this.getPicker().getCustomHeader();
-			oHeader.getContentLeft()[0].setValue(this.getSelectedItem().getText());
-			oHeader.getContentLeft()[0].setTextDirection(this.getTextDirection());
-			oHeader.getContentLeft()[0].setTextAlign(this.getTextAlign());
+			var oInput = this.getPicker().getCustomHeader().getContentLeft()[0];
+			oInput.setValue(this.getSelectedItem().getText());
+			oInput.setTextDirection(this.getTextDirection());
+			oInput.setTextAlign(this.getTextAlign());
 		};
 
 		/* =========================================================== */
@@ -636,6 +606,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 
 			// selected item on focus
 			this._oSelectionOnFocus = null;
+
+			// to detect when the control is in the rendering phase
+			this._bRenderingPhase = false;
+
+			// to detect if the focusout event is triggered due a rendering
+			this._bFocusoutDueRendering = false;
 		};
 
 		/**
@@ -644,7 +620,27 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @private
 		 */
 		Select.prototype.onBeforeRendering = function() {
+
+			// rendering phase is started
+			this._bRenderingPhase = true;
+
+			// note: in IE11 and Firefox 38, the focusout event is not fired when the select is removed
+			if (this.getFocusDomRef() === document.activeElement) {
+				this._handleFocusout();
+			}
+
 			this.synchronizeSelection();
+		};
+
+		/**
+		 * Required adaptations after rendering.
+		 *
+		 * @private
+		 */
+		Select.prototype.onAfterRendering = function() {
+
+			// rendering phase is finished
+			this._bRenderingPhase = false;
 		};
 
 		/**
@@ -1007,7 +1003,9 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 */
 		Select.prototype.onfocusin = function(oEvent) {
 
-			this._oSelectionOnFocus = this.getSelectedItem();
+			if (!this._bFocusoutDueRendering) {
+				this._oSelectionOnFocus = this.getSelectedItem();
+			}
 
 			// note: in some circumstances IE browsers focus non-focusable elements
 			if (oEvent.target !== this.getFocusDomRef()) {	// whether an inner element is receiving the focus
@@ -1025,8 +1023,8 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @name sap.m.Select#onfocusout
 		 * @function
 		 */
-		Select.prototype.onfocusout = function(oEvent) {
-			this._checkSelectionChange();
+		Select.prototype.onfocusout = function() {
+			this._handleFocusout();
 		};
 
 		/**
@@ -1416,6 +1414,37 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 			this.setSelection(null);
 		};
 
+		/**
+		 * Handle properties changes of items in the aggregation named <code>items</code>.
+		 *
+		 * @private
+		 * @param {sap.ui.base.Event} oControlEvent
+		 * @since 1.30
+		 */
+		Select.prototype.onItemChange = function(oControlEvent) {
+			var sSelectedItemId = this.getAssociation("selectedItem"),
+				sNewValue = oControlEvent.getParameter("newValue"),
+				sProperty = oControlEvent.getParameter("name");
+
+			// if the selected item has not changed, no synchronization is needed
+			if (sSelectedItemId !== oControlEvent.getParameter("id")) {
+				return;
+			}
+
+			// synchronize properties
+			switch (sProperty) {
+				case "text":
+					this.setValue(sNewValue);
+					break;
+
+				case "key":
+					this.setSelectedKey(sNewValue);
+					break;
+
+				// no default
+			}
+		};
+
 		Select.prototype.fireChange = function(mParameters) {
 			this._oSelectionOnFocus = mParameters.selectedItem;
 			return this.fireEvent("change", mParameters);
@@ -1514,6 +1543,44 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		/* ----------------------------------------------------------- */
 		/* public methods                                              */
 		/* ----------------------------------------------------------- */
+
+		/**
+		 * Adds a item to the aggregation named <code>items</code>.
+		 *
+		 * @param {sap.ui.core.Item} oItem The item to add; if empty, nothing is inserted.
+		 * @returns {sap.m.Select} <code>this</code> to allow method chaining.
+		 * @public
+		 */
+		Select.prototype.addItem = function(oItem) {
+			this.addAggregation("items", oItem);
+
+			if (oItem) {
+				oItem.attachEvent("_change", this.onItemChange, this);
+			}
+
+			return this;
+		};
+
+		/**
+		 * Inserts a item into the aggregation named <code>items</code>.
+		 *
+		 * @param {sap.ui.core.Item} oItem The item to insert; if empty, nothing is inserted.
+		 * @param {int} iIndex The <code>0</code>-based index the item should be inserted at; for
+		 *             a negative value of <code>iIndex</code>, the item is inserted at position 0; for a value
+		 *             greater than the current size of the aggregation, the item is inserted at
+		 *             the last position.
+		 * @returns {sap.m.Select} <code>this</code> to allow method chaining.
+		 * @public
+		 */
+		Select.prototype.insertItem = function(oItem, iIndex) {
+			this.insertAggregation("items", oItem, iIndex);
+
+			if (oItem) {
+				oItem.attachEvent("_change", this.onItemChange, this);
+			}
+
+			return this;
+		};
 
 		Select.prototype.findAggregatedObjects = function() {
 			var oList = this.getList();
@@ -1808,6 +1875,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 				this.setValue("");
 			}
 
+			if (vItem) {
+				vItem.detachEvent("_change", this.onItemChange, this);
+			}
+
 			return vItem;
 		};
 
@@ -1827,6 +1898,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 
 			if (!this.isInvalidateSuppressed()) {
 				this.invalidate();
+			}
+
+			for (var i = 0; i < aItems.length; i++) {
+				aItems[i].detachEvent("_change", this.onItemChange, this);
 			}
 
 			return aItems;

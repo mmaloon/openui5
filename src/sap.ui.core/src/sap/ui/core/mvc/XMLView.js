@@ -3,8 +3,8 @@
  */
 
 // Provides control sap.ui.core.mvc.XMLView.
-sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', 'sap/ui/core/XMLTemplateProcessor', 'sap/ui/core/library', './View', 'sap/ui/model/resource/ResourceModel', 'jquery.sap.xml'],
-	function(jQuery, DataType, XMLTemplateProcessor, library, View, ResourceModel/* , jQuerySap */) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/core/XMLTemplateProcessor', 'sap/ui/core/library', './View', 'sap/ui/model/resource/ResourceModel', 'sap/ui/base/ManagedObject', 'sap/ui/core/Control', 'jquery.sap.xml'],
+	function(jQuery, XMLTemplateProcessor, library, View, ResourceModel, ManagedObject, Control/* , jQuerySap */) {
 	"use strict";
 
 	/**
@@ -63,6 +63,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', 'sap/ui/core/XMLTemp
 		 * @param {string | object} vView name of the view or a view configuration object as described above.
 		 * @param {string} [vView.viewName] name of the view resource in module name notation (without suffix)
 		 * @param {string|Document} [vView.viewContent] XML string or XML document that defines the view.
+		 * @param {boolean} [vView.async] defines how the view source is loaded and rendered later on
 		 * @param {sap.ui.core.mvc.Controller} [vView.controller] Controller instance to be used for this view
 		 * @public
 		 * @static
@@ -127,6 +128,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', 'sap/ui/core/XMLTemp
 				throw new Error("mSettings must be given");
 			}
 
+			if (this._oAsyncState) {
+				// suppress rendering of preserve content
+				this._oAsyncState.suppressPreserve = true;
+			}
+
 			// View template handling - either template name or XML node is given
 			if (mSettings.viewName && mSettings.viewContent) {
 				throw new Error("View name and view content are given. There is no point in doing this, so please decide.");
@@ -181,16 +187,22 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', 'sap/ui/core/XMLTemp
 		};
 
 		XMLView.prototype.exit = function() {
-			this.oAfterRenderingNotifier.destroy();
+			if (this.oAfterRenderingNotifier) {
+				this.oAfterRenderingNotifier.destroy();
+			}
 			View.prototype.exit.apply(this, arguments);
 		};
 
 		XMLView.prototype.onControllerConnected = function(oController) {
 			var that = this;
 			// unset any preprocessors (e.g. from an enclosing JSON view)
-			sap.ui.base.ManagedObject.runWithPreprocessors(function() {
+			ManagedObject.runWithPreprocessors(function() {
 				// parse the XML tree
 				that._aParsedContent = XMLTemplateProcessor.parseTemplate(that._xContent, that);
+				// allow rendering of preserve content
+				if (that._oAsyncState) {
+					delete that._oAsyncState.suppressPreserve;
+				}
 			}, {
 				settings: this._fnSettingsPreprocessor
 			});
@@ -249,12 +261,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', 'sap/ui/core/XMLTemp
 		* type one preprocessor is executed. If there is a preprocessor passed to or activated at the
 		* view instance already, that one is used.
 		*
-		* It can be either a module name as string of an object with the same interface as
-		* {@link sap.ui.core.mvc.View.Preprocessor} (you may inherit from it) or a function with a signature according to
-		* {@link sap.ui.core.mvc.View.Preprocessor.process}.
+		* It can be either a module name as string of an implementation of {@link sap.ui.core.mvc.View.Preprocessor} or a
+		* function with a signature according to {@link sap.ui.core.mvc.View.Preprocessor.process}.
 		*
 		* <strong>Note</strong>: Preprocessors work only in async views and will be ignored when the view is instantiated
-		* in sync mode, as this could have unexpected side effects. You may override this behaviour by setting the
+		* in sync mode by default, as this could have unexpected side effects. You may override this behaviour by setting the
 		* bSyncSupport flag to true.
 		*
 		* @public
@@ -268,14 +279,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', 'sap/ui/core/XMLTemp
 		* 		also for sync views. Please be aware that any kind of async processing (like Promises, XHR, etc) may
 		* 		break the view initialization and lead to unexpected results.
 		* @param {boolean} [bOnDemand]
-		* 		ondemand preprocessor which enables developers to quickly specify the preprocessor for a view,
+		* 		ondemand preprocessor which enables developers to quickly activate the preprocessor for a view,
 		* 		by setting <code>preprocessors : { xml }</code>, for example.
 		* @param {object} [mSettings]
 		* 		optional configuration for preprocessor
 		*/
-		XMLView.registerPreprocessor = function(sType, vPreprocessor, bOnDemand, bSyncSupport, mSettings) {
+		XMLView.registerPreprocessor = function(sType, vPreprocessor, bSyncSupport, bOnDemand, mSettings) {
 			if (sType == "xml" || sType == "controls") {
-				sap.ui.core.mvc.View.registerPreprocessor(sType, vPreprocessor, this.getMetadata().getClass()._sType, bOnDemand, bSyncSupport, mSettings);
+				sap.ui.core.mvc.View.registerPreprocessor(sType, vPreprocessor, this.getMetadata().getClass()._sType, bSyncSupport, bOnDemand, mSettings);
 			} else {
 				jQuery.sap.log.error("Preprocessor could not be registered due to unknown sType \"" + sType + "\"", this.getMetadata().getName());
 			}
@@ -285,7 +296,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', 'sap/ui/core/XMLTemp
 		 * Dummy control for after rendering notification before onAfterRendering of
 		 * child controls of the XMLView is called
 		 */
-		sap.ui.core.Control.extend("sap.ui.core.mvc.XMLAfterRenderingNotifier", {
+		Control.extend("sap.ui.core.mvc.XMLAfterRenderingNotifier", {
 			renderer: function(oRM, oControl) {
 				oRM.write(""); // onAfterRendering is only called if control produces output
 			}
@@ -296,4 +307,4 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', 'sap/ui/core/XMLTemp
 
 	return XMLView;
 
-}, /* bExport= */ true);
+});

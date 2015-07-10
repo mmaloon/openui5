@@ -8,7 +8,7 @@
 }
 
 .sapMLIBActive .sapMObjectAttributeDiv{
-	color: @sapUiLITextInverted;
+	color: @sapUiListActiveTextColor;
 }
 
 .sap-desktop .sapMObjectAttributeActive:focus {
@@ -30,7 +30,7 @@
 	font-family: @sapUiFontFamily;
 	font-size: @sapMFontMediumSize;
 	font-weight: normal;
-	color: @sapUiLightText;
+	color: @sapUiContentLabelColor;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -45,12 +45,16 @@
 	box-sizing: border-box;
 }
 
+.sapMOHR .sapMOHRAttr .sapMObjectAttributeDiv > span:only-of-type {
+	max-width: 100%;
+}
+
 .sapMOHR .sapMOHRAttr .sapMObjectAttributeColon {
 	display: inline-block;
 	font-family: @sapUiFontFamily;
 	font-size: @sapMFontMediumSize;
 	font-weight: normal;
-	color: @sapUiLightText;
+	color: @sapUiContentLabelColor;
 	float: left;
 	white-space: nowrap;
 	max-width: 0.5rem;
@@ -97,7 +101,7 @@
 	font-family: @sapUiFontFamily;
 	font-size: @sapMFontMediumSize;
 	font-weight: normal;
-	color: @sapUiLightText;
+	color: @sapUiContentLabelColor;
 }
 
 .sapMOH .sapMObjectAttributeActive .sapMObjectAttributeText {

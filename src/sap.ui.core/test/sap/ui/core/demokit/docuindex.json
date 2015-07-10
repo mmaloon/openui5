@@ -13,7 +13,10 @@
 				"name" : "Control",
 				"category" : "Display",
 				"since" : "1.0",
-				"samples" : [ "sap.ui.core.sample.ControlBusyIndicator" ]
+				"samples" : [
+					"sap.ui.core.sample.ControlBusyIndicator",
+					"sap.ui.core.sample.FieldGroup"
+				]
 			},
 			{
 				"id" : "sap.ui.core.HTML",
@@ -37,14 +40,28 @@
 				"samples" : [ "sap.ui.core.sample.InvisibleText" ]
 			},
 			{
+				"id" : "sap.ui.core.mvc.View",
+				"name" : "View",
+				"category" : "Display",
+				"appComponent" : "CA-UI-COR",
+				"formFactors" : "-",
+				"since" : "\"The Elders may know...\"",
+				"samples" : [
+					"sap.ui.core.sample.View.async",
+					"sap.ui.core.sample.View.preprocessor"
+				]
+			},
+			{
 				"id" : "sap.ui.core.mvc.XMLView",
 				"name" : "XMLView",
 				"category" : "Display",
 				"since" : "1.26",
 				"samples" : [
 					"sap.ui.core.sample.ViewTemplate.scenario",
+					"sap.ui.core.sample.ViewTemplate.scenario.extension",
 					"sap.ui.core.sample.ViewTemplate.tiny",
-					"sap.ui.core.sample.ViewTemplate.types"
+					"sap.ui.core.sample.ViewTemplate.types",
+					"sap.ui.core.sample.ViewTemplate.valuelist"
 				]
 			},
 			{
@@ -179,6 +196,11 @@
 				"description": "A control's busy indicator can be used to block parts of the screen until an operation has finished. In this example we block the content of only one out of two panels."
 			},
 			{
+				"id": "sap.ui.core.sample.FieldGroup",
+				"name": "Field Groups",
+				"description": "A control's field group id can be used to define a virtual group of fields that should be validated together. Field groups can be validated usinf the ValidateFieldGroup event if the user presses the enter key in a field belonging to the field group or focusses a control outside of the field group."
+			},
+			{
 				"id": "sap.ui.core.sample.Html",
 				"name": "HTML",
 				"description": "With the HTML controls you can easily embed any kind of HTML content into your UI5 mobile application."
@@ -209,9 +231,24 @@
 				"description" : "Many controls provide the associations ariaLabelledBy and ariaDescribedBy for accessibility purposes. The InvisibleText control can be used by application to provide hidden texts on the UI which can be referenced via these associations."
 			},
 			{
+				"id": "sap.ui.core.sample.View.async",
+				"name": "Async View loading and rendering",
+				"description": "Example for Views with async source loading and the impact on rendering."
+			},
+			{
+				"id": "sap.ui.core.sample.View.preprocessor",
+				"name": "Preprocessor example with XMLView",
+				"description": "A small example for View Preprocessor usage with XMLViews."
+			},
+			{
 				"id": "sap.ui.core.sample.ViewTemplate.scenario",
 				"name": "XML Templating: demo scenario",
 				"description": "Complete demo scenario for XML Templating based on OData V4 annotations"
+			},
+			{
+				"id": "sap.ui.core.sample.ViewTemplate.scenario.extension",
+				"name": "XML Templating: demo scenario extension",
+				"description": "Complete demo scenario for XML Templating based on OData V4 annotations incl. custom extensions"
 			},
 			{
 				"id": "sap.ui.core.sample.ViewTemplate.tiny",
@@ -222,6 +259,11 @@
 				"id": "sap.ui.core.sample.ViewTemplate.types",
 				"name": "XML Templating: UI5 OData types",
 				"description": "XML Templating sample with UI5 core primitive OData types"
+			},
+			{
+				"id": "sap.ui.core.sample.ViewTemplate.valuelist",
+				"name": "Separate Value List Loading",
+				"description": "Separate loading of value lists to reduce size of OData service metadata to be loaded"
 			},
 			{
 				"id": "sap.ui.core.sample.OpaMatchers",
